@@ -7,7 +7,18 @@
 
 (defn available-classes
   "Returns a list of available classes."
-  [])
+  [^TransactionContext db]
+  (fc/get-range db
+                (-> "class"
+                    ftup/from
+                    ftup/range)
+                :keyfn (fn [k-ba]
+                         (-> k-ba
+                             ftup/from-bytes
+                             ftup/get-items
+                             second))
+                :valfn (fn [v-ba]
+                         (byte-streams/convert v-ba Integer))))
 
 (defn signup-student
   "Signs up a student for a class."

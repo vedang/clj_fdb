@@ -30,6 +30,14 @@
   [^Transaction tr ^"[B" k]
   (.get tr k))
 
+(defn get-range
+  "Gets an ordered range of keys and values from the database. The
+  begin and end keys are specified by byte[] arrays, with the begin
+  key inclusive and the end key exclusive. Ranges are returned from
+  calls to Tuple.range() and Range.startsWith(byte[])."
+  [^Transaction tr ^Range rg]
+  (.getRange tr rg))
+
 (defn clear-key
   "When given a Transaction and a key, clears a given key from the
   database. This will not affect the database until commit() is

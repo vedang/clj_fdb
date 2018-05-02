@@ -1,7 +1,8 @@
 (ns clj-fdb.core
   (:require [byte-streams :as bs]
             [clj-fdb.transaction :as ftr])
-  (:import [com.apple.foundationdb Transaction TransactionContext]))
+  (:import [com.apple.foundationdb KeyValue Range Transaction TransactionContext]
+           com.apple.foundationdb.tuple.Tuple))
 
 ;;; Load functions which teach byte-streams how to convert things to
 ;;; byte-arrays.
@@ -46,4 +47,27 @@
   [^TransactionContext db k]
   (let [tr-fn (fn [^Transaction tr]
                 (ftr/clear-key tr (bs/to-byte-array k)))]
+    (ftr/run db tr-fn)))
+
+(defn get-range
+  "Takes the following:
+  - TransactionContext `db`
+  - Range of keys to fetch `rg`
+
+  and returns a map of key/value pairs (byte-array->byte-array).
+
+  Optionally, you can pass in `:keyfn` and `:valfn` to transform the
+  key/value to the correct format. `:keyfn` should accept a byte-array
+  representing the key, `:valfn` should accept a byte-array
+  representing the value."
+  [^TransactionContext db ^Range rg &
+   {:keys [keyfn valfn]
+    :or {keyfn identity
+         valfn identity}}]
+  (let [tr-fn (fn [^Transaction tr]
+                (reduce (fn [acc ^KeyValue kv]
+                          (assoc acc
+                                 (keyfn (.getKey kv)) (valfn (.getValue kv))))
+                        {}
+                        (ftr/get-range tr rg)))]
     (ftr/run db tr-fn)))
