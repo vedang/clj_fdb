@@ -1,4 +1,5 @@
 (ns clj-fdb.core
+  (:refer-clojure :exclude [get set])
   (:require [byte-streams :as bs]
             [clj-fdb.byte-conversions :refer [byte-array-class]]
             [clj-fdb.transaction :as ftr])

@@ -1,4 +1,5 @@
 (ns clj-fdb.transaction
+  (:refer-clojure :exclude [get set])
   (:import clojure.lang.IFn
            [com.apple.foundationdb Range Transaction TransactionContext]
            java.util.function.Function))
