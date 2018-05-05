@@ -2,7 +2,7 @@
   (:require [byte-streams :as bs]
             [clj-fdb.core :as fc]
             [clj-fdb.transaction :as ftr]
-            [clj-fdb.tuple :as ftup]
+            [clj-fdb.tuple.tuple :as ftup]
             [clojure.string :as cs]
             [clojure.tools.logging :as ctl])
   (:import [com.apple.foundationdb Database FDB Transaction TransactionContext]

@@ -1,4 +1,4 @@
-(ns clj-fdb.tuple
+(ns clj-fdb.tuple.tuple
   (:refer-clojure :exclude [range])
   (:import com.apple.foundationdb.Range
            com.apple.foundationdb.tuple.Tuple))
