@@ -38,9 +38,12 @@
   [^TransactionContext db ^String student-id ^String class-id]
   (ftr/run db
     (fn [^Transaction tr]
-      (let [attendance-key (ftup/from "attends" class-id student-id)
+      (let [class-attendance-key (ftup/from "attends" class-id student-id)
+            student-attendance-range-key (ftup/from "attends" student-id)
+            student-attendance-key (ftup/from "attends" student-id class-id)
             class-key (ftup/from "class" class-id)
-            exists? (fc/get tr attendance-key)]
+            exists? (and (fc/get tr class-attendance-key)
+                         (fc/get tr student-attendance-key))]
 
         (if exists?
           ;; Nothing to do if student is already signed up.
@@ -50,24 +53,41 @@
           (let [seats-left (fc/get tr
                                    class-key
                                    :valfn (fn [v-ba]
-                                            (bs/convert v-ba Integer)))]
-            (if (> seats-left 0)
-              (do (fc/set tr attendance-key (ftup/from ""))
+                                            (bs/convert v-ba Integer)))
+                previously-signed-up (->> student-attendance-range-key
+                                          ftup/range
+                                          (fc/get-range tr)
+                                          count)]
+            (cond
+              (and seats-left
+                   (pos? seats-left)
+                   (< previously-signed-up 5))
+              (do (fc/set tr class-attendance-key (ftup/from ""))
+                  (fc/set tr student-attendance-key (ftup/from ""))
                   (fc/set tr class-key (int (dec seats-left)))
                   (ctl/info (format "[%s] Welcome %s! You have been signed up for this class!"
                                     class-id
                                     student-id)))
+
+              (>= previously-signed-up 5)
               (throw (IllegalArgumentException.
-                      (str "No seats remaining in class: " class-id))))))))))
+                      "You've already signed up for the max number of allowed classes!"))
+
+              :else
+              (throw (IllegalArgumentException.
+                      (format "[%s] No seats remaining in class!"
+                              class-id))))))))))
 
 (defn drop-student
   "Drops a student from a class"
   [^TransactionContext db ^String student-id ^String class-id]
   (ftr/run db
     (fn [^Transaction tr]
-      (let [attendance-key (ftup/from "attends" class-id student-id)
+      (let [class-attendance-key (ftup/from "attends" class-id student-id)
+            student-attendance-key (ftup/from "attends" student-id class-id)
             class-key (ftup/from "class" class-id)
-            exists? (fc/get tr attendance-key)]
+            exists? (and (fc/get tr class-attendance-key)
+                         (fc/get tr student-attendance-key))]
 
         (if exists?
           (let [seats-left (fc/get tr
@@ -77,12 +97,21 @@
             (ctl/info (format "[%s] Hey %s! Sorry to see you go!"
                               class-id
                               student-id))
-            (fc/clear tr attendance-key)
+            (fc/clear tr class-attendance-key)
+            (fc/clear tr student-attendance-key)
             (fc/set tr class-key (int (inc seats-left))))
           ;; Nothing to do here, the student isn't signed up.
           (ctl/info (format "[%s] Hello %s! You aren't currently already signed up for this class!"
                             class-id
                             student-id)))))))
+
+(defn switch-classes
+  "Given a student-id and two class-ids, switch classes for the student!"
+  [^TransactionContext db student-id old-class-id new-class-id]
+  (ftr/run db
+    (fn [^Transaction tr]
+      (drop-student tr student-id old-class-id)
+      (signup-student tr student-id new-class-id))))
 
 (defn- add-class
   "Used to populate the database's class list."
@@ -98,15 +127,15 @@
       (->> "attends"
            ftup/from
            ftup/range
-           (ftr/clear-range tr))
+           (fc/clear-range tr))
       ;; Clear list of classes
       (->> "class"
            ftup/from
            ftup/range
-           (ftr/clear-range tr))
+           (fc/clear-range tr))
       ;; Add list of classes as given to us
       (doseq [c classnames]
-        (add-class tr c (int 100))))))
+        (add-class tr c (int 10))))))
 
 (defn- reset-class
   "Helper function to remove all attendees from a class and reset it.
@@ -135,10 +164,22 @@
                      available-seats))
    (ftr/run db
      (fn [^Transaction tr]
-       (->> (ftup/from "attends" class-id)
-            ftup/range
-            (ftr/clear-range tr))
-       (add-class tr class-id (int available-seats))))))
+       (let [class-attendance-range-key (ftup/from "attends" class-id)
+             attending-student-ids (keys (fc/get-range tr
+                                                       (ftup/range class-attendance-range-key)
+                                                       :keyfn (fn [k-ba]
+                                                                (->> k-ba
+                                                                     ftup/from-bytes
+                                                                     ftup/get-items
+                                                                     (drop 2)
+                                                                     first))))
+             student-attendance-keys (map (partial ftup/from "attends")
+                                          attending-student-ids
+                                          (repeat class-id))]
+         (fc/clear-range tr (ftup/range class-attendance-range-key))
+         (doseq [s student-attendance-keys]
+           (fc/clear tr s))
+         (add-class tr class-id (int available-seats)))))))
 
 (comment
   ;; Create classes for fun and profit
@@ -160,4 +201,29 @@
                          ti class-times]
                      (cs/join " " [le ty ti]))]
     (with-open [db (.open fdb)]
-      (init-db db classnames))))
+      (init-db db classnames)))
+
+  ;; List all the available classes
+  (let [fdb (FDB/selectAPIVersion 510)]
+    (with-open [db (.open fdb)]
+      (available-classes db)))
+
+  ;; Sign-up a student for a class
+  (let [fdb (FDB/selectAPIVersion 510)]
+    (with-open [db (.open fdb)]
+      (signup-student db "student-1" "101 alg 10:00")))
+
+  ;; Switch classes for a student
+  (let [fdb (FDB/selectAPIVersion 510)]
+    (with-open [db (.open fdb)]
+      (switch-classes db "student-1" "101 alg 10:00" "101 alg 12:00")))
+
+  ;; Drop a student from a class
+  (let [fdb (FDB/selectAPIVersion 510)]
+    (with-open [db (.open fdb)]
+      (drop-student db "student-1" "101 alg 12:00")))
+
+  ;; Reset the state of the class
+  (let [fdb (FDB/selectAPIVersion 510)]
+    (with-open [db (.open fdb)]
+      (reset-class db "101 alg 12:00"))))
