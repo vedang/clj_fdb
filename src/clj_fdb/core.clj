@@ -109,3 +109,13 @@
                         {}
                         (ftr/get-range tr rg)))]
     (ftr/run tc tr-fn)))
+
+(defn clear-range
+  "Takes the following:
+  - TransactionContext `tc`
+  - Range of keys to be cleared `rg`
+
+  and clears the range from the db. Returns nil."
+  [^TransactionContext tc ^Range rg]
+  (let [tr-fn (fn [^Transaction tr] (ftr/clear-range tr rg))]
+    (ftr/run tc tr-fn)))
