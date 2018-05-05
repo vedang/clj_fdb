@@ -182,8 +182,9 @@
          (add-class tr class-id (int available-seats)))))))
 
 (comment
+  (require '[clj-fdb.FDB :as cfdb])
   ;; Create classes for fun and profit
-  (let [fdb (FDB/selectAPIVersion 510)
+  (let [fdb (cfdb/select-api-version 510)
         class-levels ["intro" "for dummies" "remedial"
                       "101" "201" "301"
                       "mastery" "lab" "seminar"]
@@ -200,30 +201,30 @@
                          ty class-types
                          ti class-times]
                      (cs/join " " [le ty ti]))]
-    (with-open [db (.open fdb)]
+    (with-open [db (cfdb/open fdb)]
       (init-db db classnames)))
 
   ;; List all the available classes
-  (let [fdb (FDB/selectAPIVersion 510)]
-    (with-open [db (.open fdb)]
+  (let [fdb (cfdb/select-api-version 510)]
+    (with-open [db (cfdb/open fdb)]
       (available-classes db)))
 
   ;; Sign-up a student for a class
-  (let [fdb (FDB/selectAPIVersion 510)]
-    (with-open [db (.open fdb)]
+  (let [fdb (cfdb/select-api-version 510)]
+    (with-open [db (cfdb/open fdb)]
       (signup-student db "student-1" "101 alg 10:00")))
 
   ;; Switch classes for a student
-  (let [fdb (FDB/selectAPIVersion 510)]
-    (with-open [db (.open fdb)]
+  (let [fdb (cfdb/select-api-version 510)]
+    (with-open [db (cfdb/open fdb)]
       (switch-classes db "student-1" "101 alg 10:00" "101 alg 12:00")))
 
   ;; Drop a student from a class
-  (let [fdb (FDB/selectAPIVersion 510)]
-    (with-open [db (.open fdb)]
+  (let [fdb (cfdb/select-api-version 510)]
+    (with-open [db (cfdb/open fdb)]
       (drop-student db "student-1" "101 alg 12:00")))
 
   ;; Reset the state of the class
-  (let [fdb (FDB/selectAPIVersion 510)]
-    (with-open [db (.open fdb)]
+  (let [fdb (cfdb/select-api-version 510)]
+    (with-open [db (cfdb/open fdb)]
       (reset-class db "101 alg 12:00"))))
