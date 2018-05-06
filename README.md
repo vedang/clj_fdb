@@ -5,8 +5,11 @@ A thin wrapper for the Java API for FoundationDB.
 ## Layout
 
 To get started, you need to read/use the functions defined in
-`src/clj_fdb/core.clj`. At the moment, this ns provides the following
-functions:
+[src/clj_fdb/core.clj](https://github.com/vedang/clj_fdb/blob/master/src/clj_fdb/core.clj).
+The impatient reader can jump to the [Examples section](#examples) to
+see the functions in action.
+
+At the moment, this ns provides the following functions:
 
     - set
     - get
@@ -34,6 +37,9 @@ underlying Java driver. So the style is as follows:
 parts of the Java API at the moment. Going through `transaction.clj`
 or `tuple.clj` or `FDB.clj` will give you a clear idea of what I have
 in mind, please help me by contributing PRs!
+
+The complete documentation is available at:
+https://vedang.github.io/clj_fdb/
 
 ## Installation
 
@@ -70,9 +76,91 @@ This library has taken shape as a side-effect of trying to write that
 example in Clojure.
 
 You can find the Class Scheduler example in the top-level `examples/`
-folder. This gives the reader a good idea of how to use `clj-fdb`.
-Refer to the comment block at the end of the example to see how to use
-the library on the REPL.
+folder
+([here](https://github.com/vedang/clj_fdb/blob/master/src/examples/class_scheduling.clj)).
+This gives the reader a good idea of how to use `clj-fdb`. Refer to
+the comment block at the end of the example for how to run the
+example.
+
+Here is some test code to demonstrate how to use the functions defined
+in the core ns:
+```clojure
+(comment
+  (require '[byte-streams :as bs]
+           '[clj-fdb.FDB :as cfdb]
+           '[clj-fdb.core :as fc]
+           '[clj-fdb.transaction :as ftr]
+           '[clj-fdb.tuple.tuple :as ftup])
+
+  ;; Set a value in the DB.
+  (let [fdb (cfdb/select-api-version 510)]
+    (with-open [db (cfdb/open fdb)]
+      (fc/set db "a:test:key" "some value")))
+  ;; => nil
+
+  ;; Read this value back in the DB.
+  (let [fdb (cfdb/select-api-version 510)]
+    (with-open [db (cfdb/open fdb)]
+      (fc/get db "a:test:key" :valfn bs/to-string)))
+  ;; => "some value"
+
+  ;; FDB's Tuple Layer is super handy for efficient range reads. Each
+  ;; element of the tuple can act as a prefix (from left to right).
+  (let [fdb (cfdb/select-api-version 510)]
+    (with-open [db (cfdb/open fdb)]
+      (fc/set db (ftup/from "test" "keys" "A") "value A")
+      (fc/set db (ftup/from "test" "keys" "B") "value B")
+      (fc/set db (ftup/from "test" "keys" "C") "value C")
+      (fc/get-range db
+                    (ftup/range (ftup/from "test" "keys"))
+                    :keyfn (comp ftup/get-items ftup/from-bytes)
+                    :valfn bs/to-string)))
+  ;; => {["test" "keys" "A"] "value A",
+  ;;     ["test" "keys" "B"] "value B",
+  ;;     ["test" "keys" "C"] "value C"}
+
+  ;; FDB's functions are beautifully composable. So you needn't
+  ;; execute each step of the above function in independent
+  ;; transactions. You can perform them all inside a single
+  ;; transaction. (with the full power of ACID behind you)
+  (let [fdb (cfdb/select-api-version 510)]
+    (with-open [db (cfdb/open fdb)]
+      (ftr/run db
+        (fn [tr]
+          (fc/set tr (ftup/from "test" "keys" "A") "value inside transaction A")
+          (fc/set tr (ftup/from "test" "keys" "B") "value inside transaction B")
+          (fc/set tr (ftup/from "test" "keys" "C") "value inside transaction C")
+          (fc/get-range tr
+                        (ftup/range (ftup/from "test" "keys"))
+                        :keyfn (comp ftup/get-items ftup/from-bytes)
+                        :valfn bs/to-string)))))
+  ;; => {["test" "keys" "A"] "value inside transaction A",
+  ;;     ["test" "keys" "B"] "value inside transaction B",
+  ;;     ["test" "keys" "C"] "value inside transaction C"}
+
+  ;; The beauty and power of this is here:
+  (let [fdb (cfdb/select-api-version 510)]
+    (with-open [db (cfdb/open fdb)]
+      (try (ftr/run db
+             (fn [tr]
+               (fc/set tr (ftup/from "test" "keys" "A") "NEW value A")
+               (fc/set tr (ftup/from "test" "keys" "B") "NEW value B")
+               (fc/set tr (ftup/from "test" "keys" "C") "NEW value C")
+               (throw (ex-info "I don't like completing transactions"
+                               {:boo :hoo}))))
+           (catch Exception _
+             (fc/get-range db
+                           (ftup/range (ftup/from "test" "keys"))
+                           :keyfn (comp ftup/get-items ftup/from-bytes)
+                           :valfn bs/to-string)))))
+  ;; => {["test" "keys" "A"] "value inside transaction A",
+  ;;     ["test" "keys" "B"] "value inside transaction B",
+  ;;     ["test" "keys" "C"] "value inside transaction C"}
+  ;; No change to the values because the transaction did not succeed!
+
+  ;; I hope this helps you get started with using this library!
+)
+```
 
 ## Other Notes
 
