@@ -79,7 +79,7 @@
           end        (.pack (ftup/from "g"))
           rg         (Range. begin end)
           v          (int 1)
-          k          "gum"]
+          k          (ftup/from "gum")]
       (let [fdb (cfdb/select-api-version 510)]
         (with-open [db (cfdb/open fdb)]
           (doseq [k input-keys]
@@ -87,4 +87,4 @@
               (fc/set db k v)))
 
           (fc/clear-range db rg)
-          (is (= (fc/get db k :valfn #(bs/convert %1 Integer)))))))))
+          (is (= (fc/get db k :valfn #(bs/convert %1 Integer)) v)))))))
