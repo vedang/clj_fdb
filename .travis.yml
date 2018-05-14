@@ -9,3 +9,7 @@ install:
 
 script:
   - lein test
+
+cache:
+  directories:
+  - $HOME/.m2
