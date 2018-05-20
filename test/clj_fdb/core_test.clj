@@ -1,31 +1,33 @@
 (ns clj-fdb.core-test
   (:require [byte-streams :as bs]
-            [clojure.test :refer :all]
-            [clj-fdb.FDB :as cfdb]
             [clj-fdb.core :as fc]
-            [clj-fdb.transaction :as ftr]
-            [clj-fdb.tuple.tuple :as ftup])
-  (:import [com.apple.foundationdb Range]))
+            [clj-fdb.FDB :as cfdb]
+            [clj-fdb.internal.util :as u]
+            [clj-fdb.tuple.tuple :as ftup]
+            [clojure.test :refer :all]))
 
-(defn- clear-all
-  []
+(def ^:dynamic *prefix* nil)
+
+(defn- clear-all-with-prefix
+  "Helper fn to ensure sanity of DB"
+  [prefix]
   (let [fdb (cfdb/select-api-version 510)
-        begin (byte-array [])
-        end (byte-array [0xFF])
-        rg (Range. begin end)]
+        rg (ftup/range (ftup/from prefix))]
     (with-open [db (cfdb/open fdb)]
       (fc/clear-range db rg))))
 
 (defn- test-fixture
   [test]
-  (test)
-  (clear-all))
+  (let [random-prefix (str "testcycle:" (u/rand-str 5))]
+    (binding [*prefix* random-prefix]
+      (test))
+    (clear-all-with-prefix random-prefix)))
 
 (use-fixtures :each test-fixture)
 
 (deftest test-get-set
   (testing "Test the best-case path for `fc/set` and `fc/get`"
-    (let [k (ftup/from "foo")
+    (let [k (ftup/from *prefix* "foo")
           v (int 1)]
       (let [fdb (cfdb/select-api-version 510)]
         (with-open [db (cfdb/open fdb)]
@@ -37,14 +39,14 @@
 (deftest test-get-non-existent-key
   (testing "Test that `fc/get` on a non-existent key returns `nil`"
     (let [fdb (cfdb/select-api-version 510)
-          k "non-existent"]
+          k (ftup/from *prefix* "non-existent")]
       (with-open [db (cfdb/open fdb)]
-        (is (nil? (fc/get db (ftup/from k))))))))
+        (is (nil? (fc/get db k)))))))
 
 (deftest test-clear-key
   (testing "Test the best-case path for `fc/clear`"
     (let [fdb (cfdb/select-api-version 510)
-          k (ftup/from "foo")
+          k (ftup/from *prefix* "foo")
           v (int 1)]
       (with-open [db (cfdb/open fdb)]
         (fc/set db k v)
