@@ -28,6 +28,13 @@
 
 (defn ^Range range
   "Returns a range representing all keys that encode Tuples strictly
-  starting with this Tuple."
+  starting with this Tuple.
+
+  For example:
+      (range (from \"a\" \"b\"))
+  includes all tuples (\"a\", \"b\", ...)
+
+  Returns:
+  the range of keys containing all Tuples that have this Tuple as a prefix."
   [^Tuple t]
   (.range t))

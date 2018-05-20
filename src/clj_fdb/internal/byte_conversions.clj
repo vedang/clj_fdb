@@ -1,4 +1,4 @@
-(ns clj-fdb.byte-conversions
+(ns clj-fdb.internal.byte-conversions
   (:require [byte-streams :as bs]
             [clj-fdb.tuple.tuple :as ftup])
   (:import byte_streams.Utils

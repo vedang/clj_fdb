@@ -8,7 +8,7 @@
                  [byte-streams "0.2.3"]]
   :target-path "target/%s"
   :codox {:source-uri "https://github.com/vedang/clj_fdb/blob/master/{filepath}#L{line}"
-          :namespaces [#"^clj-fdb\.(?!byte-conversions)" #"^examples"]
+          :namespaces [#"^examples" #"^clj-fdb\.(?!internal)"]
           :doc-files ["README.md"]
           :metadata {:doc/format :markdown}}
   :profiles {:uberjar {:aot :all}})

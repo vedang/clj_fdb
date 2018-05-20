@@ -1,7 +1,7 @@
 (ns clj-fdb.core
   (:refer-clojure :exclude [get set])
   (:require [byte-streams :as bs]
-            [clj-fdb.byte-conversions :refer [byte-array-class]]
+            [clj-fdb.internal.byte-conversions :refer [byte-array-class]]
             [clj-fdb.transaction :as ftr])
   (:import [com.apple.foundationdb KeyValue Range Transaction TransactionContext]
            java.lang.IllegalArgumentException))
