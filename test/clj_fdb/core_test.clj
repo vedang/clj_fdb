@@ -9,28 +9,11 @@
             [clojure.test :refer :all])
   (:import com.apple.foundationdb.Transaction))
 
-(def ^:dynamic *prefix* nil)
-
-(defn- clear-all-with-prefix
-  "Helper fn to ensure sanity of DB"
-  [prefix]
-  (let [fdb (cfdb/select-api-version 510)
-        rg (ftup/range (ftup/from prefix))]
-    (with-open [db (cfdb/open fdb)]
-      (fc/clear-range db rg))))
-
-(defn- test-fixture
-  [test]
-  (let [random-prefix (str "testcycle:" (u/rand-str 5))]
-    (binding [*prefix* random-prefix]
-      (test))
-    (clear-all-with-prefix random-prefix)))
-
-(use-fixtures :each test-fixture)
+(use-fixtures :each u/test-fixture)
 
 (deftest test-get-set
   (testing "Test the best-case path for `fc/set` and `fc/get`"
-    (let [k (ftup/from *prefix* "foo")
+    (let [k (ftup/from u/*test-prefix* "foo")
           v (int 1)]
       (let [fdb (cfdb/select-api-version 510)]
         (with-open [db (cfdb/open fdb)]
@@ -42,14 +25,14 @@
 (deftest test-get-non-existent-key
   (testing "Test that `fc/get` on a non-existent key returns `nil`"
     (let [fdb (cfdb/select-api-version 510)
-          k (ftup/from *prefix* "non-existent")]
+          k (ftup/from u/*test-prefix* "non-existent")]
       (with-open [db (cfdb/open fdb)]
         (is (nil? (fc/get db k)))))))
 
 (deftest test-clear-key
   (testing "Test the best-case path for `fc/clear`"
     (let [fdb (cfdb/select-api-version 510)
-          k (ftup/from *prefix* "foo")
+          k (ftup/from u/*test-prefix* "foo")
           v (int 1)]
       (with-open [db (cfdb/open fdb)]
         (fc/set db k v)
@@ -62,8 +45,8 @@
   (testing "Test the best-case path for `fc/get-range`. End is exclusive."
     (let [fdb (cfdb/select-api-version 510)
           input-keys ["bar" "car" "foo" "gum"]
-          begin      (ftup/pack (ftup/from *prefix* "b"))
-          end        (ftup/pack (ftup/from *prefix* "g"))
+          begin      (ftup/pack (ftup/from u/*test-prefix* "b"))
+          end        (ftup/pack (ftup/from u/*test-prefix* "g"))
           rg         (frange/range begin end)
           v          (int 1)
           expected-map {"bar" v "car" v "foo" v}]
@@ -71,7 +54,7 @@
         (ftr/run db
           (fn [^Transaction tr]
             (doseq [k input-keys]
-              (let [k (ftup/from *prefix* k)]
+              (let [k (ftup/from u/*test-prefix* k)]
                 (fc/set tr k v)))))
 
         (is (= (fc/get-range db rg
@@ -83,8 +66,8 @@
   (testing "Test the best-case path for `fc/clear-range`. End is exclusive."
     (let [fdb (cfdb/select-api-version 510)
           input-keys ["bar" "car" "foo" "gum"]
-          begin      (ftup/pack (ftup/from *prefix* "b"))
-          end        (ftup/pack (ftup/from *prefix* "g"))
+          begin      (ftup/pack (ftup/from u/*test-prefix* "b"))
+          end        (ftup/pack (ftup/from u/*test-prefix* "g"))
           rg         (frange/range begin end)
           v          (int 1)
           excluded-k "gum"]
@@ -92,10 +75,10 @@
         (ftr/run db
           (fn [^Transaction tr]
             (doseq [k input-keys]
-              (let [k (ftup/from *prefix* k)]
+              (let [k (ftup/from u/*test-prefix* k)]
                 (fc/set tr k v)))))
         (fc/clear-range db rg)
 
-        (is (= (fc/get db (ftup/from *prefix* excluded-k)
+        (is (= (fc/get db (ftup/from u/*test-prefix* excluded-k)
                        :valfn #(bs/convert % Integer))
                v))))))

@@ -9,24 +9,7 @@
             [clojure.test :refer :all])
   (:import com.apple.foundationdb.Transaction))
 
-(def ^:dynamic *prefix* nil)
-
-(defn- clear-all-with-prefix
-  "Helper fn to ensure sanity of DB"
-  [prefix]
-  (let [fdb (cfdb/select-api-version 510)
-        rg (ftup/range (ftup/from prefix))]
-    (with-open [db (cfdb/open fdb)]
-      (fc/clear-range db rg))))
-
-(defn- test-fixture
-  [test]
-  (let [random-prefix (str "testcycle:" (u/rand-str 5))]
-    (binding [*prefix* random-prefix]
-      (test))
-    (clear-all-with-prefix random-prefix)))
-
-(use-fixtures :each test-fixture)
+(use-fixtures :each u/test-fixture)
 
 (deftest test-range-contructor
   (let [fdb (cfdb/select-api-version 510)
@@ -38,22 +21,22 @@
       (ftr/run db
         (fn [^Transaction tr]
           (doseq [k test-keys]
-            (fc/set tr (ftup/from *prefix* k) test-val))))
+            (fc/set tr (ftup/from u/*test-prefix* k) test-val))))
       (is (= (fc/get-range db
-                           (frange/range (ftup/pack (ftup/from *prefix* "bar"))
-                                         (ftup/pack (ftup/from *prefix* "baz")))
+                           (frange/range (ftup/pack (ftup/from u/*test-prefix* "bar"))
+                                         (ftup/pack (ftup/from u/*test-prefix* "baz")))
                            :keyfn (comp second ftup/get-items ftup/from-bytes)
                            :valfn #(bs/convert % String))
              expected-map-1))
       (is (= (fc/get-range db
-                           (frange/range (ftup/pack (ftup/from *prefix* "a"))
-                                         (ftup/pack (ftup/from *prefix* "z")))
+                           (frange/range (ftup/pack (ftup/from u/*test-prefix* "a"))
+                                         (ftup/pack (ftup/from u/*test-prefix* "z")))
                            :keyfn (comp second ftup/get-items ftup/from-bytes)
                            :valfn #(bs/convert % String))
              expected-map-2))
       (is (= (fc/get-range db
-                           (frange/range (ftup/pack (ftup/from *prefix* "c"))
-                                         (ftup/pack (ftup/from *prefix* "z")))
+                           (frange/range (ftup/pack (ftup/from u/*test-prefix* "c"))
+                                         (ftup/pack (ftup/from u/*test-prefix* "z")))
                            :keyfn (comp second ftup/get-items ftup/from-bytes)
                            :valfn #(bs/convert % String))
              {})))))
@@ -72,9 +55,12 @@
       (ftr/run db
         (fn [^Transaction tr]
           (doseq [k test-keys]
-            (fc/set tr (apply ftup/from *prefix* k) test-val))))
+            (fc/set tr (apply ftup/from u/*test-prefix* k) test-val))))
       (is (= (fc/get-range db
-                           (frange/starts-with (ftup/pack (ftup/from *prefix* "bar")))
+                           (-> u/*test-prefix*
+                               (ftup/from "bar")
+                               ftup/pack
+                               frange/starts-with)
                            :keyfn (comp (partial drop 1)
                                         ftup/get-items
                                         ftup/from-bytes)
@@ -82,14 +68,20 @@
              expected-map-1))
       ;; startswith in tuples requires exact match
       (is (= (fc/get-range db
-                           (frange/starts-with (ftup/pack (ftup/from *prefix* "bb")))
+                           (-> u/*test-prefix*
+                               (ftup/from "bb")
+                               ftup/pack
+                               frange/starts-with)
                            :keyfn (comp (partial drop 1)
                                         ftup/get-items
                                         ftup/from-bytes)
                            :valfn #(bs/convert % String))
              {}))
       (is (= (fc/get-range db
-                           (frange/starts-with (ftup/pack (ftup/from *prefix* "bbz")))
+                           (-> u/*test-prefix*
+                               (ftup/from "bbz")
+                               ftup/pack
+                               frange/starts-with)
                            :keyfn (comp (partial drop 1)
                                         ftup/get-items
                                         ftup/from-bytes)
