@@ -55,10 +55,9 @@ download and install it locally. You can do this as follows:
 $ mvn install:install-file -Dfile=fdb-java-5.1.7.jar -DgroupId=com.apple.foundationdb -DartifactId=fdb-java -Dversion=5.1.7 -Dpackaging=jar
 ```
 * Download this library from Github by cloning this project.
-* Run the following commands in the top level of the library
+* Run the following command in the top level of the library
 ```
-$ lein uberjar
-$ lein install
+$ lein do clean, compile, install
 ```
 * Use the library in your Clojure projects by adding the dep in
   `project.clj`

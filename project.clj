@@ -10,5 +10,4 @@
   :codox {:source-uri "https://github.com/vedang/clj_fdb/blob/master/{filepath}#L{line}"
           :namespaces [#"^examples" #"^clj-fdb\.(?!internal)"]
           :doc-files ["README.md"]
-          :metadata {:doc/format :markdown}}
-  :profiles {:uberjar {:aot :all}})
+          :metadata {:doc/format :markdown}})
