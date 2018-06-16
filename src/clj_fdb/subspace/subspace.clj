@@ -30,8 +30,10 @@
 
 
 (defn ^"[B" pack
-  [^Subspace s]
-  (.pack s))
+  ([^Subspace s]
+   (.pack s))
+  ([^Subspace s ^Tuple t]
+   (.pack s t)))
 
 
 (defn ^Tuple unpack
