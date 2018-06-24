@@ -16,6 +16,11 @@ At the moment, this ns provides the following functions:
     - clear
     - get-range
     - clear-range
+    - set-subspaced-key
+    - get-subspaced-key
+    - clear-subspaced-key
+    - get-subspaced-range
+    - clear-subspaced-range
 
 Since FDB only stores data as bytes, these functions will use the
 [byte-streams](https://github.com/ztellman/byte-streams) library to
@@ -75,7 +80,8 @@ in the core ns:
            '[clj-fdb.FDB :as cfdb]
            '[clj-fdb.core :as fc]
            '[clj-fdb.transaction :as ftr]
-           '[clj-fdb.tuple.tuple :as ftup])
+           '[clj-fdb.tuple.tuple :as ftup]
+           '[clj-fdb.subspace.subspace :as fsubspace])
 
   ;; Set a value in the DB.
   (let [fdb (cfdb/select-api-version 510)]
@@ -103,6 +109,19 @@ in the core ns:
   ;; => {["test" "keys" "A"] "value A",
   ;;     ["test" "keys" "B"] "value B",
   ;;     ["test" "keys" "C"] "value C"}
+
+  ;; FDB's Subspace Layer provides a neat way to logically namespace keys.
+  (let [fdb (cfdb/select-api-version 510)
+        subspace (fsubspace/create-subspace (ftup/from "test" "keys"))]
+    (with-open [db (cfdb/open fdb)]
+      (fc/set-subspaced-key db subspace (ftup/from "A") "Value A")
+      (fc/set-subspaced-key db subspace (ftup/from "B") "Value B")
+      (fc/get-subspaced-key db subspace (ftup/from "A")
+                            :valfn #(bs/convert % String))
+      (fc/get-subspaced-range db subspace (ftup/from)
+                              :keyfn (comp ftup/get-items ftup/from-bytes)
+                              :valfn #(bs/convert % String))))
+  ;; => {["test" "keys" "A"] "Value A", ["test" "keys" "B"] "Value B"}
 
   ;; FDB's functions are beautifully composable. So you needn't
   ;; execute each step of the above function in independent
