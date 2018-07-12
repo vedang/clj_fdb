@@ -48,17 +48,6 @@ https://vedang.github.io/clj_fdb/
 
 ## Installation
 
-Currently, installing this library from Clojars is broken. This is
-because the FoundationDB Java API Jar is not available for download
-from a central repository like Maven. To use this library, you need to
-download and install it locally. You can do this as follows:
-
-* Download the FoundationDB Java API Jar from here:
-  https://www.foundationdb.org/downloads/5.1.7/bindings/java/fdb-java-5.1.7.jar
-* Install it to your Maven repository as follows:
-```
-$ mvn install:install-file -Dfile=fdb-java-5.1.7.jar -DgroupId=com.apple.foundationdb -DartifactId=fdb-java -Dversion=5.1.7 -Dpackaging=jar
-```
 * Download this library from Github by cloning this project.
 * Run the following command in the top level of the library
 ```
