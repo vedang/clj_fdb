@@ -3,7 +3,7 @@
   :url "https://vedang.github.io/clj_fdb/"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.foundationdb/fdb-java "5.2.5"]
+  :dependencies [[org.foundationdb/fdb-java "6.0.15"]
                  [byte-streams "0.2.3"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.9.0"]
                                   [org.clojure/tools.logging "0.4.1"]]

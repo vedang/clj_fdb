@@ -1,11 +1,9 @@
 language: clojure
 
 install:
-  - wget https://www.foundationdb.org/downloads/5.1.5/ubuntu/installers/foundationdb-clients_5.1.5-1_amd64.deb
-  - wget https://www.foundationdb.org/downloads/5.1.5/ubuntu/installers/foundationdb-server_5.1.5-1_amd64.deb
-  - sudo dpkg -i foundationdb-server_5.1.5-1_amd64.deb foundationdb-clients_5.1.5-1_amd64.deb || true
-  - wget https://www.foundationdb.org/downloads/5.1.7/bindings/java/fdb-java-5.1.7.jar
-  - mvn install:install-file -Dfile=fdb-java-5.1.7.jar -DgroupId=com.apple.foundationdb -DartifactId=fdb-java -Dversion=5.1.7 -Dpackaging=jar
+  - wget https://www.foundationdb.org/downloads/6.0.15/ubuntu/installers/foundationdb-clients_6.0.15-1_amd64.deb
+  - wget https://www.foundationdb.org/downloads/6.0.15/ubuntu/installers/foundationdb-server_6.0.15-1_amd64.deb
+  - sudo dpkg -i foundationdb-clients_6.0.15-1_amd64.deb foundationdb-server_6.0.15-1_amd64.deb
 
 script:
   - lein test
