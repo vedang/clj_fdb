@@ -16,7 +16,7 @@
   (testing "Test the best-case path for `fc/set` and `fc/get`"
     (let [k (ftup/from u/*test-prefix* "foo")
           v (int 1)]
-      (let [fdb (cfdb/select-api-version 510)]
+      (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
         (with-open [db (cfdb/open fdb)]
           (fc/set db k v))
         (with-open [db (cfdb/open fdb)]
@@ -25,14 +25,14 @@
 
 (deftest test-get-non-existent-key
   (testing "Test that `fc/get` on a non-existent key returns `nil`"
-    (let [fdb (cfdb/select-api-version 510)
+    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           k (ftup/from u/*test-prefix* "non-existent")]
       (with-open [db (cfdb/open fdb)]
         (is (nil? (fc/get db k)))))))
 
 (deftest test-clear-key
   (testing "Test the best-case path for `fc/clear`"
-    (let [fdb (cfdb/select-api-version 510)
+    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           k (ftup/from u/*test-prefix* "foo")
           v (int 1)]
       (with-open [db (cfdb/open fdb)]
@@ -44,7 +44,7 @@
 
 (deftest test-get-range
   (testing "Test the best-case path for `fc/get-range`. End is exclusive."
-    (let [fdb (cfdb/select-api-version 510)
+    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           input-keys ["bar" "car" "foo" "gum"]
           begin      (ftup/pack (ftup/from u/*test-prefix* "b"))
           end        (ftup/pack (ftup/from u/*test-prefix* "g"))
@@ -65,7 +65,7 @@
 
 (deftest test-clear-range
   (testing "Test the best-case path for `fc/clear-range`. End is exclusive."
-    (let [fdb (cfdb/select-api-version 510)
+    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           input-keys ["bar" "car" "foo" "gum"]
           begin      (ftup/pack (ftup/from u/*test-prefix* "b"))
           end        (ftup/pack (ftup/from u/*test-prefix* "g"))
@@ -86,7 +86,7 @@
 
 (deftest test-get-set-subspaced-key
   (testing "Get/Set Subspaced Key using empty Tuple"
-    (let [fdb (cfdb/select-api-version 510)
+    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
           prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
       (with-open [db (cfdb/open fdb)]
@@ -109,7 +109,7 @@
                                      :valfn #(bs/convert % String))
                "New value")))))
   (testing "Get/Set Subspaced Key using non-empty Tuple"
-    (let [fdb (cfdb/select-api-version 510)
+    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
           prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
       (with-open [db (cfdb/open fdb)]
@@ -123,7 +123,7 @@
                                  :valfn #(bs/convert % String))
            "value"))))
   (testing "Get non-existent Subspaced Key"
-    (let [fdb (cfdb/select-api-version 510)
+    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
           prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
       (with-open [db (cfdb/open fdb)]
@@ -134,7 +134,7 @@
 
 (deftest test-clear-subspaced-key
   (testing "Clear subspaced key"
-    (let [fdb (cfdb/select-api-version 510)
+    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
           prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
       (with-open [db (cfdb/open fdb)]
@@ -157,7 +157,7 @@
 
 (deftest test-get-subspaced-range
   (testing "Get subspaced range"
-    (let [fdb (cfdb/select-api-version 510)
+    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
           prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)
           input-keys ["bar" "car" "foo" "gum"]
@@ -173,7 +173,7 @@
 
 (deftest test-clear-subspaced-range
   (testing "Clear subspaced range"
-    (let [fdb (cfdb/select-api-version 510)
+    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
           prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)
           input-keys ["bar" "car" "foo" "gum"]

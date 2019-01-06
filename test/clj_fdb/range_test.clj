@@ -12,7 +12,7 @@
 (use-fixtures :each u/test-fixture)
 
 (deftest test-range-contructor
-  (let [fdb (cfdb/select-api-version 510)
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         test-keys ["bar" "bas" "bbt" "baq" "baz"]
         test-val "TESTVAL"
         expected-map-1 (zipmap ["bar" "bas"] (repeat test-val))
@@ -42,7 +42,7 @@
              {})))))
 
 (deftest test-range-starts-with
-  (let [fdb (cfdb/select-api-version 510)
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         test-keys [["bar" "a"] ["bar" "ba"]
                    ["bas" "a"] ["bas" "ba"]
                    ["bbt" "a"]

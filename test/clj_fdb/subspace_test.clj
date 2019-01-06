@@ -9,7 +9,7 @@
 
 
 (deftest test-prefixed-subspace
-  (let [fdb (cfdb/select-api-version 510)
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         random-prefix (str "prefixed-subspace-test:"
                            (u/rand-str 5))
         prefix-subspace (fss/create-subspace (ftup/from random-prefix))]

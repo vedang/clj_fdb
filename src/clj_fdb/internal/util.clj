@@ -17,7 +17,7 @@
 (defn- clear-all-with-prefix
   "Helper fn to ensure sanity of DB"
   [prefix]
-  (let [fdb (cfdb/select-api-version 510)
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         rg (ftup/range (ftup/from prefix))]
     (with-open [db (cfdb/open fdb)]
       (fc/clear-range db rg))))

@@ -73,20 +73,20 @@ in the core ns:
            '[clj-fdb.subspace.subspace :as fsubspace])
 
   ;; Set a value in the DB.
-  (let [fdb (cfdb/select-api-version 510)]
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
       (fc/set db "a:test:key" "some value")))
   ;; => nil
 
   ;; Read this value back in the DB.
-  (let [fdb (cfdb/select-api-version 510)]
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
       (fc/get db "a:test:key" :valfn bs/to-string)))
   ;; => "some value"
 
   ;; FDB's Tuple Layer is super handy for efficient range reads. Each
   ;; element of the tuple can act as a prefix (from left to right).
-  (let [fdb (cfdb/select-api-version 510)]
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
       (fc/set db (ftup/from "test" "keys" "A") "value A")
       (fc/set db (ftup/from "test" "keys" "B") "value B")
@@ -100,7 +100,7 @@ in the core ns:
   ;;     ["test" "keys" "C"] "value C"}
 
   ;; FDB's Subspace Layer provides a neat way to logically namespace keys.
-  (let [fdb (cfdb/select-api-version 510)
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         subspace (fsubspace/create-subspace (ftup/from "test" "keys"))]
     (with-open [db (cfdb/open fdb)]
       (fc/set-subspaced-key db subspace (ftup/from "A") "Value A")
@@ -116,7 +116,7 @@ in the core ns:
   ;; execute each step of the above function in independent
   ;; transactions. You can perform them all inside a single
   ;; transaction. (with the full power of ACID behind you)
-  (let [fdb (cfdb/select-api-version 510)]
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
       (ftr/run db
         (fn [tr]
@@ -132,7 +132,7 @@ in the core ns:
   ;;     ["test" "keys" "C"] "value inside transaction C"}
 
   ;; The beauty and power of this is here:
-  (let [fdb (cfdb/select-api-version 510)]
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
       (try (ftr/run db
              (fn [tr]

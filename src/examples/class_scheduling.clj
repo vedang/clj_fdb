@@ -263,7 +263,7 @@
     class (chosen at random)."
   [sid ops-per-student]
   (let [student-id (str "Student: " sid)
-        fdb (cfdb/select-api-version 510)]
+        fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
       (reduce (fn [my-classes _]
                 (perform-random-action db student-id my-classes))
@@ -289,7 +289,7 @@
 
 (comment
   ;; Create classes for fun and profit
-  (let [fdb (cfdb/select-api-version 510)
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         class-levels ["intro" "for dummies" "remedial"
                       "101" "201" "301"
                       "mastery" "lab" "seminar"]
@@ -310,32 +310,32 @@
       (init-db db classnames)))
 
   ;; List all the available classes
-  (let [fdb (cfdb/select-api-version 510)]
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
       (available-classes db)))
 
   ;; Sign-up a student for a class
-  (let [fdb (cfdb/select-api-version 510)]
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
       (signup-student db "student-1" "101 alg 10:00")))
 
   ;; Switch classes for a student
-  (let [fdb (cfdb/select-api-version 510)]
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
       (switch-classes db "student-1" "101 alg 10:00" "101 alg 12:00")))
 
   ;; Drop a student from a class
-  (let [fdb (cfdb/select-api-version 510)]
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
       (drop-student db "student-1" "101 alg 12:00")))
 
   ;; Reset the state of the class
-  (let [fdb (cfdb/select-api-version 510)]
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
       (reset-class db "101 alg 12:00")))
 
   ;; Reset the state of a student
-  (let [fdb (cfdb/select-api-version 510)]
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
       (reset-student db "student-1")))
 
