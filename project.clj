@@ -11,6 +11,6 @@
   :target-path "target/%s"
   :global-vars {*warn-on-reflection* true}
   :codox {:source-uri "https://github.com/vedang/clj_fdb/blob/master/{filepath}#L{line}"
-          :namespaces [#"^examples" #"^clj-fdb\.(?!internal)"]
+          :namespaces [#"^examples" #"^me\.vedang\.clj-fdb\.(?!internal)"]
           :doc-files ["README.md"]
           :metadata {:doc/format :markdown}})
