@@ -1,9 +1,9 @@
-(ns clj-fdb.core
+(ns me.vedang.clj-fdb.core
   (:refer-clojure :exclude [get set])
   (:require [byte-streams :as bs]
-            [clj-fdb.internal.byte-conversions :refer [byte-array-class]]
-            [clj-fdb.transaction :as ftr]
-            [clj-fdb.subspace.subspace :as fsubspace])
+            [me.vedang.clj-fdb.internal.byte-conversions :refer [byte-array-class]]
+            [me.vedang.clj-fdb.transaction :as ftr]
+            [me.vedang.clj-fdb.subspace.subspace :as fsubspace])
   (:import [com.apple.foundationdb KeyValue Range Transaction TransactionContext]
            [com.apple.foundationdb.subspace Subspace]
            [com.apple.foundationdb.tuple Tuple]

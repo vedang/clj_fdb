@@ -1,4 +1,4 @@
-(ns clj-fdb.range
+(ns me.vedang.clj-fdb.range
   "A simple description of an exact range of keyspace, specified by a
   begin and end key. As with all FoundationDB APIs, begin is
   inclusive, end exclusive."

@@ -1,7 +1,7 @@
-(ns clj-fdb.internal.util
-  (:require [clj-fdb.core :as fc]
-            [clj-fdb.FDB :as cfdb]
-            [clj-fdb.tuple.tuple :as ftup]))
+(ns me.vedang.clj-fdb.internal.util
+  (:require [me.vedang.clj-fdb.core :as fc]
+            [me.vedang.clj-fdb.FDB :as cfdb]
+            [me.vedang.clj-fdb.tuple.tuple :as ftup]))
 
 (let [alphabet (vec "abcdefghijklmnopqrstuvwxyz0123456789")]
   (defn rand-str

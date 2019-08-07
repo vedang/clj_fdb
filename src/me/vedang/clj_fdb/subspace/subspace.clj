@@ -1,4 +1,4 @@
-(ns clj-fdb.subspace.subspace
+(ns me.vedang.clj-fdb.subspace.subspace
   (:refer-clojure :exclude [contains? range get])
   (:import com.apple.foundationdb.subspace.Subspace
            com.apple.foundationdb.Range

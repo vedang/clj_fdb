@@ -1,6 +1,6 @@
-(ns clj-fdb.internal.byte-conversions
+(ns me.vedang.clj-fdb.internal.byte-conversions
   (:require [byte-streams :as bs]
-            [clj-fdb.tuple.tuple :as ftup])
+            [me.vedang.clj-fdb.tuple.tuple :as ftup])
   (:import byte_streams.Utils
            com.apple.foundationdb.tuple.Tuple
            java.nio.ByteBuffer))

@@ -1,4 +1,4 @@
-(ns clj-fdb.FDB
+(ns me.vedang.clj-fdb.FDB
   (:import [com.apple.foundationdb FDB FDBDatabase NetworkOptions]
            java.util.concurrent.Executor))
 
