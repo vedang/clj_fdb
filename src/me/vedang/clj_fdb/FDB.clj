@@ -1,10 +1,10 @@
-(ns clj-fdb.FDB
+(ns me.vedang.clj-fdb.FDB
   (:import [com.apple.foundationdb FDB FDBDatabase NetworkOptions]
            java.util.concurrent.Executor))
 
 (def clj-fdb-api-version
   "The API version used by this library in all tests and documentation"
-  600)
+  610)
 
 (defn ^NetworkOptions options
   "Returns a set of options that can be set on a the FoundationDB API.

@@ -5,7 +5,7 @@ A thin wrapper for the Java API for FoundationDB.
 ## Layout
 
 To get started, you need to read/use the functions defined in
-[src/clj_fdb/core.clj](https://github.com/vedang/clj_fdb/blob/master/src/clj_fdb/core.clj).
+[src/me/vedang/clj_fdb/core.clj](https://github.com/vedang/clj_fdb/blob/master/src/me/vedang/clj_fdb/core.clj).
 The impatient reader can jump to the [Examples section](#examples) to
 see the functions in action.
 
@@ -33,9 +33,9 @@ using the API simpler, but you should be able to drop down when you
 need to. I've chosen to mimic the directory structure of the
 underlying Java driver. So the style is as follows:
 
-    - `src/clj_fdb/` mimics `com.apple.foundationdb` (with
+    - `src/me/vedang/clj_fdb/` mimics `com.apple.foundationdb` (with
       `transaction.clj` and `FDB.clj`)
-    - `src/clj_fdb/tuple/` mimics `com.apple.foundationdb.tuple` (with
+    - `src/me/vedang/clj_fdb/tuple/` mimics `com.apple.foundationdb.tuple` (with
       `tuple.clj`)
 
 ... and so on. I haven't gotten around to actually writing the other
@@ -48,15 +48,10 @@ https://vedang.github.io/clj_fdb/
 
 ## Installation
 
-* Download this library from Github by cloning this project.
-* Run the following command in the top level of the library
-```
-$ lein do clean, compile, install
-```
 * Use the library in your Clojure projects by adding the dep in
   `project.clj`
 ```
-[clj-fdb "0.1.0"]
+[me.vedang/clj-fdb "0.1.0"]
 ```
 
 ## Examples
@@ -66,11 +61,11 @@ in the core ns:
 ```clojure
 (comment
   (require '[byte-streams :as bs]
-           '[clj-fdb.FDB :as cfdb]
-           '[clj-fdb.core :as fc]
-           '[clj-fdb.transaction :as ftr]
-           '[clj-fdb.tuple.tuple :as ftup]
-           '[clj-fdb.subspace.subspace :as fsubspace])
+           '[me.vedang.clj-fdb.FDB :as cfdb]
+           '[me.vedang.clj-fdb.core :as fc]
+           '[me.vedang.clj-fdb.transaction :as ftr]
+           '[me.vedang.clj-fdb.tuple.tuple :as ftup]
+           '[me.vedang.clj-fdb.subspace.subspace :as fsubspace])
 
   ;; Set a value in the DB.
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
@@ -168,8 +163,3 @@ folder
 This gives the reader a good idea of how to use `clj-fdb`. Refer to
 the comment block at the end of the example for how to run the
 example.
-
-## Other Notes
-
-There are no tests at the moment. I do plan on writing them at some
-point in time. Please contribute tests if you can!

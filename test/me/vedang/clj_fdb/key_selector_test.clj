@@ -1,10 +1,10 @@
-(ns clj-fdb.key-selector-test
+(ns me.vedang.clj-fdb.key-selector-test
   (:require
-   [clj-fdb.core :as fc]
-   [clj-fdb.transaction :as ftr]
-   [clj-fdb.FDB :as cfdb]
+   [me.vedang.clj-fdb.core :as fc]
+   [me.vedang.clj-fdb.transaction :as ftr]
+   [me.vedang.clj-fdb.FDB :as cfdb]
    [byte-streams :as bs]
-   [clj-fdb.key-selector :refer :all]
+   [me.vedang.clj-fdb.key-selector :refer :all]
    [clojure.test :refer :all]))
 
 

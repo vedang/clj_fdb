@@ -1,4 +1,4 @@
-(ns clj-fdb.key-selector
+(ns me.vedang.clj-fdb.key-selector
   (:refer-clojure :exclude [key])
   (:import com.apple.foundationdb.KeySelector))
 

@@ -1,11 +1,11 @@
-(ns clj-fdb.range-test
+(ns me.vedang.clj-fdb.range-test
   (:require [byte-streams :as bs]
-            [clj-fdb.core :as fc]
-            [clj-fdb.FDB :as cfdb]
-            [clj-fdb.internal.util :as u]
-            [clj-fdb.range :as frange]
-            [clj-fdb.transaction :as ftr]
-            [clj-fdb.tuple.tuple :as ftup]
+            [me.vedang.clj-fdb.core :as fc]
+            [me.vedang.clj-fdb.FDB :as cfdb]
+            [me.vedang.clj-fdb.internal.util :as u]
+            [me.vedang.clj-fdb.range :as frange]
+            [me.vedang.clj-fdb.transaction :as ftr]
+            [me.vedang.clj-fdb.tuple.tuple :as ftup]
             [clojure.test :refer :all])
   (:import com.apple.foundationdb.Transaction))
 
