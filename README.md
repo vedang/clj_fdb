@@ -163,8 +163,3 @@ folder
 This gives the reader a good idea of how to use `clj-fdb`. Refer to
 the comment block at the end of the example for how to run the
 example.
-
-## Other Notes
-
-There are no tests at the moment. I do plan on writing them at some
-point in time. Please contribute tests if you can!
