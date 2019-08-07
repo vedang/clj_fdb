@@ -12,3 +12,6 @@ clj: compileclj startclj
 test: compileclj
 	@echo "\nRunning all tests"
 	lein test
+
+clean:
+	lein clean
