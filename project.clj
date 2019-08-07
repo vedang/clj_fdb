@@ -7,7 +7,7 @@
                  [byte-streams "0.2.4"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.10.1"]
                                   [org.clojure/tools.logging "0.4.1"]]
-                   :plugins [[lein-codox "0.10.5"]]}}
+                   :plugins [[lein-codox "0.10.7"]]}}
   :target-path "target/%s"
   :global-vars {*warn-on-reflection* true}
   :codox {:source-uri "https://github.com/vedang/clj_fdb/blob/master/{filepath}#L{line}"
