@@ -1,5 +1,5 @@
 # clj-fdb
-![Build Status](https://travis-ci.org/vedang/clj_fdb.svg?branch=master)
+[![Build Status](https://travis-ci.org/vedang/clj_fdb.svg?branch=master)](https://travis-ci.org/vedang/clj_fdb) [![Clojars Project](https://img.shields.io/clojars/v/me.vedang/clj-fdb.svg)](https://clojars.org/me.vedang/clj-fdb)
 
 A thin wrapper for the Java API for FoundationDB.
 
