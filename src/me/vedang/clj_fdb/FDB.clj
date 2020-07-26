@@ -39,27 +39,6 @@
   [db warn-on-unclosed?]
   (.setUnclosedWarning db warn-on-unclosed?))
 
-(defn create-cluster
-  "Connects to the cluster specified by the default `fdb.cluster` file.
-  If the FoundationDB network has not been started, it will be started
-  in the course of this call as if `startNetwork()` had been called.
-
-  Returns:
-
-  - a `CompletableFuture` that will be set to a FoundationDB Cluster.
-
-  Throws:
-
-  - `FDBException` - on errors encountered starting the FoundationDB
-  networking engine
-  - `java.lang.IllegalStateException` - if the network had been
-  previously stopped."
-  ([db]
-   (.createCluster db))
-  ([db cluster-file-path]
-   (.createCluster db cluster-file-path))
-  ([db cluster-file-path ^Executor e]
-   (.createCluster db cluster-file-path e)))
 
 (defn open
   "Initializes networking, connects with the default fdb.cluster file,

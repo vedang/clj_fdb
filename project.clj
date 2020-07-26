@@ -3,10 +3,11 @@
   :url "https://vedang.github.io/clj_fdb/"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.foundationdb/fdb-java "6.1.8"]
+  :dependencies [[org.foundationdb/fdb-java "6.2.19"]
                  [byte-streams "0.2.4"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.10.1"]
-                                  [org.clojure/tools.logging "0.4.1"]]
+                                  [org.clojure/tools.logging "1.1.0"]]
+                   :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
                    :plugins [[lein-codox "0.10.7"]]}}
   :target-path "target/%s"
   :global-vars {*warn-on-reflection* true}
