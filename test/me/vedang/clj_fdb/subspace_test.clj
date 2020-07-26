@@ -1,11 +1,15 @@
 (ns me.vedang.clj-fdb.subspace-test
-  (:require [clojure.test :refer :all]
-            [byte-streams :as bs]
-            [me.vedang.clj-fdb.FDB :as cfdb]
-            [me.vedang.clj-fdb.core :as fc]
-            [me.vedang.clj-fdb.subspace.subspace :as fss]
-            [me.vedang.clj-fdb.tuple.tuple :as ftup]
-            [me.vedang.clj-fdb.internal.util :as u]))
+  (:require
+    [byte-streams :as bs]
+    [clojure.test :refer :all]
+    [me.vedang.clj-fdb.FDB :as cfdb]
+    [me.vedang.clj-fdb.core :as fc]
+    [me.vedang.clj-fdb.internal.util :as u]
+    [me.vedang.clj-fdb.subspace.subspace :as fss]
+    [me.vedang.clj-fdb.tuple.tuple :as ftup])
+  (:import
+    (com.apple.foundationdb
+      Database)))
 
 
 (deftest test-prefixed-subspace
@@ -13,7 +17,7 @@
         random-prefix (str "prefixed-subspace-test:"
                            (u/rand-str 5))
         prefix-subspace (fss/create-subspace (ftup/from random-prefix))]
-    (with-open [db (cfdb/open fdb)]
+    (with-open [^Database db (cfdb/open fdb)]
       (fc/set db
               (fss/pack prefix-subspace
                         (ftup/from "test-key"))
