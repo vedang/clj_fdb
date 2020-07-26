@@ -28,24 +28,28 @@
         (fn [^Transaction tr]
           (doseq [k test-keys]
             (fc/set tr (ftup/from u/*test-prefix* k) test-val))))
-      (is (= (fc/get-range db
-                           (frange/range (ftup/pack (ftup/from u/*test-prefix* "bar"))
-                                         (ftup/pack (ftup/from u/*test-prefix* "baz")))
-                           :keyfn (comp second ftup/get-items ftup/from-bytes)
-                           :valfn #(bs/convert % String))
+      (is (= (fc/get-range
+               db
+               (frange/range (ftup/pack (ftup/from u/*test-prefix* "bar"))
+                             (ftup/pack (ftup/from u/*test-prefix* "baz")))
+               :keyfn (comp second ftup/get-items ftup/from-bytes)
+               :valfn #(bs/convert % String))
              expected-map-1))
-      (is (= (fc/get-range db
-                           (frange/range (ftup/pack (ftup/from u/*test-prefix* "a"))
-                                         (ftup/pack (ftup/from u/*test-prefix* "z")))
-                           :keyfn (comp second ftup/get-items ftup/from-bytes)
-                           :valfn #(bs/convert % String))
+      (is (= (fc/get-range
+               db
+               (frange/range (ftup/pack (ftup/from u/*test-prefix* "a"))
+                             (ftup/pack (ftup/from u/*test-prefix* "z")))
+               :keyfn (comp second ftup/get-items ftup/from-bytes)
+               :valfn #(bs/convert % String))
              expected-map-2))
-      (is (= (fc/get-range db
-                           (frange/range (ftup/pack (ftup/from u/*test-prefix* "c"))
-                                         (ftup/pack (ftup/from u/*test-prefix* "z")))
-                           :keyfn (comp second ftup/get-items ftup/from-bytes)
-                           :valfn #(bs/convert % String))
+      (is (= (fc/get-range
+               db
+               (frange/range (ftup/pack (ftup/from u/*test-prefix* "c"))
+                             (ftup/pack (ftup/from u/*test-prefix* "z")))
+               :keyfn (comp second ftup/get-items ftup/from-bytes)
+               :valfn #(bs/convert % String))
              {})))))
+
 
 (deftest test-range-starts-with
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)

@@ -1,13 +1,23 @@
 (ns me.vedang.clj-fdb.core
   (:refer-clojure :exclude [get set])
-  (:require [byte-streams :as bs]
-            [me.vedang.clj-fdb.internal.byte-conversions :refer [byte-array-class]]
-            [me.vedang.clj-fdb.transaction :as ftr]
-            [me.vedang.clj-fdb.subspace.subspace :as fsubspace])
-  (:import [com.apple.foundationdb KeyValue Range Transaction TransactionContext]
-           [com.apple.foundationdb.subspace Subspace]
-           [com.apple.foundationdb.tuple Tuple]
-           java.lang.IllegalArgumentException))
+  (:require
+    [byte-streams :as bs]
+    [me.vedang.clj-fdb.internal.byte-conversions :refer [byte-array-class]]
+    [me.vedang.clj-fdb.subspace.subspace :as fsubspace]
+    [me.vedang.clj-fdb.transaction :as ftr])
+  (:import
+    (com.apple.foundationdb
+      KeyValue
+      Range
+      Transaction
+      TransactionContext)
+    (com.apple.foundationdb.subspace
+      Subspace)
+    (com.apple.foundationdb.tuple
+      Tuple)
+    (java.lang
+      IllegalArgumentException)))
+
 
 (defn set
   "Takes the following:
@@ -30,12 +40,13 @@
                       v-ba (valfn v)]
                   (when-not (instance? byte-array-class k-ba)
                     (throw (IllegalArgumentException.
-                            "The provided Key Fn did not return a byte-array on input")))
+                             "The provided Key Fn did not return a byte-array on input")))
                   (when-not (instance? byte-array-class v-ba)
                     (throw (IllegalArgumentException.
-                            "The provided Val Fn did not return a byte-array on input")))
+                             "The provided Val Fn did not return a byte-array on input")))
                   (ftr/set tr k-ba v-ba)))]
     (ftr/run tc tr-fn)))
+
 
 (defn get
   "Takes the following:
@@ -61,10 +72,11 @@
                 (let [k-ba (keyfn k)]
                   (when-not (instance? byte-array-class k-ba)
                     (throw (IllegalArgumentException.
-                            "The provided Key Fn did not return a byte-array on input")))
+                             "The provided Key Fn did not return a byte-array on input")))
                   (when-let [v (deref (ftr/get tr k-ba))]
                     (valfn v))))]
     (ftr/run tc tr-fn)))
+
 
 (defn clear
   "Takes the following:
@@ -86,9 +98,10 @@
                 (let [k-ba (keyfn k)]
                   (when-not (instance? byte-array-class k-ba)
                     (throw (IllegalArgumentException.
-                            "The provided Key Fn did not return a byte-array on input")))
+                             "The provided Key Fn did not return a byte-array on input")))
                   (ftr/clear-key tr k-ba)))]
     (ftr/run tc tr-fn)))
+
 
 (defn get-range
   "Takes the following:
@@ -113,6 +126,7 @@
                         (ftr/get-range tr rg)))]
     (ftr/run tc tr-fn)))
 
+
 (defn clear-range
   "Takes the following:
   - TransactionContext `tc`
@@ -122,6 +136,7 @@
   [^TransactionContext tc ^Range rg]
   (let [tr-fn (fn [^Transaction tr] (ftr/clear-range tr rg))]
     (ftr/run tc tr-fn)))
+
 
 (defn set-subspaced-key
   "Takes the following:
@@ -143,6 +158,7 @@
         :keyfn #(fsubspace/pack s %)
         :valfn valfn)))
 
+
 (defn get-subspaced-key
   "Takes the following:
   - TransactionContext `tc`
@@ -162,6 +178,7 @@
         :keyfn #(fsubspace/pack s %)
         :valfn valfn)))
 
+
 (defn clear-subspaced-key
   "Takes the following:
   - TransactionContext `tc`
@@ -172,6 +189,7 @@
   [^TransactionContext tc ^Subspace s ^Tuple t]
   (clear tc t
          :keyfn #(fsubspace/pack s %)))
+
 
 (defn get-subspaced-range
   "Takes the following:
@@ -195,6 +213,7 @@
     (get-range tc subspaced-range
                :keyfn keyfn
                :valfn valfn)))
+
 
 (defn clear-subspaced-range
   "Takes the following:

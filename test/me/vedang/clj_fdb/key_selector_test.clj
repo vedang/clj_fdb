@@ -1,11 +1,11 @@
 (ns me.vedang.clj-fdb.key-selector-test
   (:require
-   [me.vedang.clj-fdb.core :as fc]
-   [me.vedang.clj-fdb.transaction :as ftr]
-   [me.vedang.clj-fdb.FDB :as cfdb]
-   [byte-streams :as bs]
-   [me.vedang.clj-fdb.key-selector :refer :all]
-   [clojure.test :refer :all]))
+    [byte-streams :as bs]
+    [clojure.test :refer :all]
+    [me.vedang.clj-fdb.FDB :as cfdb]
+    [me.vedang.clj-fdb.core :as fc]
+    [me.vedang.clj-fdb.key-selector :refer :all]
+    [me.vedang.clj-fdb.transaction :as ftr]))
 
 
 (deftest test-constructors-and-getters
