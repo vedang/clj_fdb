@@ -1,0 +1,3 @@
+;;; -*- mode: clojure; -*-
+{:indents {run [[:block 1]]
+           def-conversion [[:block 1]]}}

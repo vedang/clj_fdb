@@ -1,13 +1,21 @@
 (ns examples.class-scheduling
-  (:require [byte-streams :as bs]
-            [me.vedang.clj-fdb.core :as fc]
-            [me.vedang.clj-fdb.FDB :as cfdb]
-            [me.vedang.clj-fdb.transaction :as ftr]
-            [me.vedang.clj-fdb.tuple.tuple :as ftup]
-            [clojure.string :as cs]
-            [clojure.tools.logging :as ctl])
-  (:import [com.apple.foundationdb Database FDB Transaction TransactionContext]
-           java.lang.IllegalArgumentException))
+  (:require
+    [byte-streams :as bs]
+    [clojure.string :as cs]
+    [clojure.tools.logging :as ctl]
+    [me.vedang.clj-fdb.FDB :as cfdb]
+    [me.vedang.clj-fdb.core :as fc]
+    [me.vedang.clj-fdb.transaction :as ftr]
+    [me.vedang.clj-fdb.tuple.tuple :as ftup])
+  (:import
+    (com.apple.foundationdb
+      Database
+      FDB
+      Transaction
+      TransactionContext)
+    (java.lang
+      IllegalArgumentException)))
+
 
 (defn available-classes
   "Returns a list of available classes. An available class is one with
@@ -32,6 +40,7 @@
                            :valfn (fn [v-ba]
                                     (bs/convert v-ba Integer)))))
 
+
 (defn- signup-student*
   "Internal function. Assumes all checks are cleared and we are inside
   a transaction."
@@ -43,6 +52,7 @@
                     student-id
                     class-id))
   class-id)
+
 
 (defn signup-student
   "Signs up a student for a class. Constraints are as follows:
@@ -73,14 +83,15 @@
 
             (>= previously-signed-up 5)
             (throw (IllegalArgumentException.
-                    (format "Hello %s! You've already signed up for the max number of allowed classes!"
-                            student-id)))
+                     (format "Hello %s! You've already signed up for the max number of allowed classes!"
+                             student-id)))
 
             :else
             (throw (IllegalArgumentException.
-                    (format "Sorry %s! No seats remaining in %s!"
-                            student-id
-                            class-id)))))))))
+                     (format "Sorry %s! No seats remaining in %s!"
+                             student-id
+                             class-id)))))))))
+
 
 (defn- drop-student*
   "Internal function. Assumes all checks are cleared and we are inside
@@ -98,6 +109,7 @@
     (fc/set tr (ftup/from "class" class-id) (int (inc seats-left)))
     class-id))
 
+
 (defn drop-student
   "Drops a student from a class, if he is signed up for it."
   [^TransactionContext db student-id class-id]
@@ -108,6 +120,7 @@
         (ctl/info (format "Hello %s! You aren't currently already signed up for %s!"
                           student-id
                           class-id))))))
+
 
 (defn switch-classes
   "Given a student-id and two class-ids, switch classes for the
@@ -121,12 +134,14 @@
       (drop-student tr student-id old-class-id)
       (signup-student tr student-id new-class-id))))
 
+
 (defn add-class
   "Used to populate the database's class list. Adds a new class to the
   list of available classes and sets the number of available seats for
   the class."
   [^TransactionContext db classname available-seats]
   (fc/set db (ftup/from "class" classname) (int available-seats)))
+
 
 (defn init-db
   "Helper function to initialize the db with a bunch of classnames.
@@ -149,6 +164,7 @@
       ;; Add list of classes as given to us
       (doseq [c classnames]
         (add-class tr c (int 10))))))
+
 
 (defn reset-class
   "Helper function to remove all attendees from a class and reset it.
@@ -191,6 +207,7 @@
          (doseq [s attending-sids]
            (drop-student tr s class-id))
          (add-class tr class-id (int available-seats)))))))
+
 
 (defn reset-student
   "Drop the given student from all classes he has signed up for."
@@ -253,6 +270,7 @@
            (ctl/info e "My My. We hit some constraint. *INVESTIGATE THIS!*")
            my-classes))))
 
+
 (defn simulate-student
   "Simulates a student represented by `sid`. The student
   performs `ops-per-student` actions. Actions are any of:
@@ -280,12 +298,14 @@
                                                 first))))
               (range ops-per-student)))))
 
+
 (defn run-sim
   "Runs the `simulate-student` function across multiple threads."
   [num-of-students ops-per-student]
   (let [futures (map (fn [i] (future (simulate-student i ops-per-student)))
                      (range num-of-students))]
     (mapv deref (shuffle futures))))
+
 
 (comment
   ;; Create classes for fun and profit

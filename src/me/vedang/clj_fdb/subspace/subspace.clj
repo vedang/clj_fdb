@@ -1,8 +1,11 @@
 (ns me.vedang.clj-fdb.subspace.subspace
   (:refer-clojure :exclude [contains? range get])
-  (:import com.apple.foundationdb.subspace.Subspace
-           com.apple.foundationdb.Range
-           com.apple.foundationdb.tuple.Tuple))
+  (:import
+    com.apple.foundationdb.Range
+    (com.apple.foundationdb.subspace
+      Subspace)
+    (com.apple.foundationdb.tuple
+      Tuple)))
 
 
 (defn ^Subspace create-subspace

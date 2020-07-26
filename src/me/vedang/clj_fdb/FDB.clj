@@ -1,10 +1,16 @@
 (ns me.vedang.clj-fdb.FDB
-  (:import [com.apple.foundationdb FDB FDBDatabase NetworkOptions]
-           java.util.concurrent.Executor))
+  (:import
+    (com.apple.foundationdb
+      FDB
+      FDBDatabase
+      NetworkOptions)
+    java.util.concurrent.Executor))
+
 
 (def clj-fdb-api-version
   "The API version used by this library in all tests and documentation"
   610)
+
 
 (defn ^NetworkOptions options
   "Returns a set of options that can be set on a the FoundationDB API.
@@ -13,8 +19,9 @@
   engine is started. The network is started by calls to startNetwork()
   and implicitly by calls to open() and createCluster() (and their
   respective variants)."
-  [db]
+  [^FDB db]
   (.options db))
+
 
 (defn ^FDBDatabase select-api-version
   "Select the version for the client API. An exception will be thrown
@@ -32,34 +39,14 @@
   [^Integer version]
   (FDB/selectAPIVersion version))
 
+
 (defn set-unclosed-warning
   "Enables or disables the stderr warning that is printed whenever an
   object with FoundationDB native resources is garbage collected
   without being closed. By default, this feature is enabled."
-  [db warn-on-unclosed?]
+  [^FDB db warn-on-unclosed?]
   (.setUnclosedWarning db warn-on-unclosed?))
 
-(defn create-cluster
-  "Connects to the cluster specified by the default `fdb.cluster` file.
-  If the FoundationDB network has not been started, it will be started
-  in the course of this call as if `startNetwork()` had been called.
-
-  Returns:
-
-  - a `CompletableFuture` that will be set to a FoundationDB Cluster.
-
-  Throws:
-
-  - `FDBException` - on errors encountered starting the FoundationDB
-  networking engine
-  - `java.lang.IllegalStateException` - if the network had been
-  previously stopped."
-  ([db]
-   (.createCluster db))
-  ([db cluster-file-path]
-   (.createCluster db cluster-file-path))
-  ([db cluster-file-path ^Executor e]
-   (.createCluster db cluster-file-path e)))
 
 (defn open
   "Initializes networking, connects with the default fdb.cluster file,
@@ -69,12 +56,13 @@
   - a `CompletableFuture` that will be set to a FoundationDB Database
 
   Throws: `FDBException`"
-  ([db]
+  ([^FDB db]
    (.open db))
-  ([db cluster-file-path]
+  ([^FDB db cluster-file-path]
    (.open db cluster-file-path))
-  ([db cluster-file-path ^Executor e]
+  ([^FDB db cluster-file-path ^Executor e]
    (.open db cluster-file-path e)))
+
 
 (defn start-network
   "Initializes networking. Can only be called once. This version of
@@ -93,10 +81,11 @@
   - FDBException
 
   See Also: NetworkOptions."
-  ([db]
+  ([^FDB db]
    (.startNetwork db))
-  ([db ^Executor e]
+  ([^FDB db ^Executor e]
    (.startNetwork db e)))
+
 
 (defn stop-network
   "Stops the FoundationDB networking engine. This can be called only
@@ -105,5 +94,5 @@
 
   Throws:
   - FDBException - on errors while stopping the network."
-  [db]
+  [^FDB db]
   (.stopNetwork db))

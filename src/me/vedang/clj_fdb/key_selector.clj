@@ -1,6 +1,8 @@
 (ns me.vedang.clj-fdb.key-selector
   (:refer-clojure :exclude [key])
-  (:import com.apple.foundationdb.KeySelector))
+  (:import
+    (com.apple.foundationdb
+      KeySelector)))
 
 
 (defn last-less-than
