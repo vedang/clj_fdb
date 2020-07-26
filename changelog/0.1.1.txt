@@ -1,0 +1,21 @@
+-*- mode: org; comment-column: 0; -*-
+
+* Version
+  - 0.1.1
+  - Release Date: <2020-07-26 Sun>
+
+* Changes
+  - Update all the project dependencies to the latest versions.
+  - This library now runs against version 6.2.19 of the Foundationdb client and server.
+  - It uses the API version 610 in all it's tests, this is the oldest supported version of FDB.
+  - The `me.vedang.clj-fdb.FDB/create-cluster` has been removed in this release, since the underlying functionality has been deprecated in the Java API.
+  - This library is still in  the 0.1.x stage. I'll start using sensible SemVer from 1.0 release, currently I'm using Break Versioning.
+
+* Commit history
+- (HEAD -> dev) Update the Travis yaml file. (8 minutes ago) [Vedang Manerikar]
+- Indentation fixes as made by cljstyle (11 minutes ago) [Vedang Manerikar]
+- Add a cljstyle configuration file (12 minutes ago) [Vedang Manerikar]
+- Fix reflection warnings in the library (14 minutes ago) [Vedang Manerikar]
+- Update all project deps to the latest versions (2 hours ago) [Vedang Manerikar]
+- (origin/dev) Fix namespace information in codox options (12 months ago) [Vedang Manerikar]
+- Bump lein-codox to the latest version (12 months ago) [Vedang Manerikar]

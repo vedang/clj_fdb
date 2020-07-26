@@ -1,4 +1,5 @@
-# clj-fdb [![Build Status](https://travis-ci.org/vedang/clj_fdb.svg?branch=master)](https://travis-ci.org/vedang/clj_fdb)
+# clj-fdb
+[![Build Status](https://travis-ci.org/vedang/clj_fdb.svg?branch=master)] (https://travis-ci.org/vedang/clj_fdb)
 
 A thin wrapper for the Java API for FoundationDB.
 
@@ -51,7 +52,7 @@ https://vedang.github.io/clj_fdb/
 * Use the library in your Clojure projects by adding the dep in
   `project.clj`
 ```
-[me.vedang/clj-fdb "0.1.0"]
+[me.vedang/clj-fdb "0.1.1"]
 ```
 
 ## Examples
