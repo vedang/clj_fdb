@@ -27,7 +27,7 @@
 
   "
   [^TransactionContext tc ^Tuple k ^bytes v ] 
-  (println "setter called , bytes " (bytes? v) ", tuple :" (class k) ) 
+  ;(println "setter called , bytes " (bytes? v) ", tuple :" (class k) ) 
   (let [tr-fn (fn [^Transaction tr]
                 (ftr/set tr (pack k) v))]
     (ftr/run tc tr-fn)))
@@ -59,4 +59,17 @@
   [^TransactionContext tc ^Tuple k]
   (deref (get-future tc k))
   )
+
+
+
+(defn get-range
+  "Takes the following:
+  - TransactionContext `tc`
+  - Range of keys to fetch `rg`
+
+  and returns a list of key/value pairs (list [^Tuple key ^bytes val] ..)."
+  [^TransactionContext tc ^Range rg ]
+  (let [tr-fn (fn [^Transaction tr]
+                (reduce (fn [v  ^KeyValue kv] (conj v [(.getKey kv) (.getValue kv)])) [] (ftr/get-range tr rg)) )]
+    (ftr/run tc tr-fn)))
 
