@@ -9,7 +9,7 @@
 
 (def clj-fdb-api-version
   "The API version used by this library in all tests and documentation"
-  610)
+  620)
 
 
 (defn ^NetworkOptions options
