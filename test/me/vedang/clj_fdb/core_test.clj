@@ -1,7 +1,7 @@
 (ns me.vedang.clj-fdb.core-test
   (:require
     [byte-streams :as bs]
-    [clojure.test :refer :all]
+    [clojure.test :refer [deftest is testing use-fixtures]]
     [me.vedang.clj-fdb.FDB :as cfdb]
     [me.vedang.clj-fdb.core :as fc]
     [me.vedang.clj-fdb.internal.util :as u]
@@ -21,13 +21,11 @@
 (deftest test-get-set
   (testing "Test the best-case path for `fc/set` and `fc/get`"
     (let [k (ftup/from u/*test-prefix* "foo")
-          v (int 1)]
-      (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
-        (with-open [^Database db (cfdb/open fdb)]
-          (fc/set db k v))
-        (with-open [^Database db (cfdb/open fdb)]
-          (is (= (fc/get db k :valfn #(bs/convert %1 Integer))
-                 v)))))))
+          v (int 1)
+          fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
+      (with-open [^Database db (cfdb/open fdb)]
+        (fc/set db k v)
+        (is (= v (fc/get db k :valfn #(bs/convert %1 Integer))))))))
 
 
 (deftest test-get-non-existent-key
@@ -45,8 +43,7 @@
           v (int 1)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db k v)
-        (is (= (fc/get db k :valfn #(bs/convert %1 Integer))
-               v))
+        (is (= v (fc/get db k :valfn #(bs/convert %1 Integer))))
         (fc/clear db k)
         (is (nil? (fc/get db k)))))))
 
@@ -67,11 +64,11 @@
               (let [k (ftup/from u/*test-prefix* k)]
                 (fc/set tr k v)))))
 
-        (is (= (fc/get-range db
+        (is (= expected-map
+               (fc/get-range db
                              rg
                              :keyfn (comp second ftup/get-items ftup/from-bytes)
-                             :valfn #(bs/convert %1 Integer))
-               expected-map))))))
+                             :valfn #(bs/convert %1 Integer))))))))
 
 
 (deftest test-clear-range
@@ -91,9 +88,8 @@
                 (fc/set tr k v)))))
         (fc/clear-range db rg)
 
-        (is (= (fc/get db (ftup/from u/*test-prefix* excluded-k)
-                       :valfn #(bs/convert % Integer))
-               v))))))
+        (is (= v (fc/get db (ftup/from u/*test-prefix* excluded-k)
+                         :valfn #(bs/convert % Integer))))))))
 
 
 (deftest test-get-set-subspaced-key
@@ -106,20 +102,21 @@
                               prefixed-subspace
                               (ftup/from)
                               "value")
-        (is (= (fc/get-subspaced-key db
+        (is (= "value"
+               (fc/get-subspaced-key db
                                      prefixed-subspace
                                      (ftup/from)
-                                     :valfn #(bs/convert % String))
-               "value"))
+                                     :valfn #(bs/convert % String))))
         (fc/set-subspaced-key db
                               prefixed-subspace
                               (ftup/from)
                               "New value")
-        (is (= (fc/get-subspaced-key db
+        (is (= "New value"
+               (fc/get-subspaced-key db
                                      prefixed-subspace
                                      (ftup/from)
-                                     :valfn #(bs/convert % String))
-               "New value")))))
+                                     :valfn #(bs/convert % String)))))))
+
   (testing "Get/Set Subspaced Key using non-empty Tuple"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
@@ -129,11 +126,11 @@
                               prefixed-subspace
                               (ftup/from "a")
                               "value")
-        (= (fc/get-subspaced-key db
+        (= "value"
+           (fc/get-subspaced-key db
                                  prefixed-subspace
                                  (ftup/from "a")
-                                 :valfn #(bs/convert % String))
-           "value"))))
+                                 :valfn #(bs/convert % String))))))
   (testing "Get non-existent Subspaced Key"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
@@ -180,10 +177,10 @@
       (with-open [^Database db (cfdb/open fdb)]
         (doseq [k input-keys]
           (fc/set-subspaced-key db prefixed-subspace (ftup/from k) v))
-        (is (= (fc/get-subspaced-range db prefixed-subspace (ftup/from)
+        (is (= expected-map
+               (fc/get-subspaced-range db prefixed-subspace (ftup/from)
                                        :keyfn (comp last ftup/get-items ftup/from-bytes)
-                                       :valfn #(bs/convert % String))
-               expected-map))))))
+                                       :valfn #(bs/convert % String))))))))
 
 
 (deftest test-clear-subspaced-range
@@ -197,10 +194,10 @@
       (with-open [^Database db (cfdb/open fdb)]
         (doseq [k input-keys]
           (fc/set-subspaced-key db prefixed-subspace (ftup/from k) v))
-        (is (= (fc/get-subspaced-range db prefixed-subspace (ftup/from)
+        (is (= expected-map
+               (fc/get-subspaced-range db prefixed-subspace (ftup/from)
                                        :keyfn (comp last ftup/get-items ftup/from-bytes)
-                                       :valfn #(bs/convert % String))
-               expected-map))
+                                       :valfn #(bs/convert % String))))
         (fc/clear-subspaced-range db prefixed-subspace)
         (is (nil? (fc/get-subspaced-key db prefixed-subspace (ftup/from)
                                         :valfn #(bs/convert % String))))))))

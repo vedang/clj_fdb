@@ -1,33 +1,34 @@
 (ns me.vedang.clj-fdb.key-selector-test
   (:require
     [byte-streams :as bs]
-    [clojure.test :refer :all]
-    [me.vedang.clj-fdb.FDB :as cfdb]
-    [me.vedang.clj-fdb.core :as fc]
-    [me.vedang.clj-fdb.key-selector :refer :all]
-    [me.vedang.clj-fdb.transaction :as ftr]))
+    [clojure.test :refer [deftest is testing]]
+    [me.vedang.clj-fdb.key-selector :as sut]))
 
 
 (deftest test-constructors-and-getters
-  (testing "Test the getter functions"
+  (testing "Test getter functions for key-selectors"
     (let [key-selectors-and-expected-results
-          [{:ks (last-less-than (.getBytes "A"))
-            :key "A" :offset 0}
-           {:ks (last-less-or-equal (.getBytes "B"))
-            :key "B" :offset 0}
-           {:ks (first-greater-than (.getBytes "C"))
-            :key "C" :offset 1}
-           {:ks (first-greater-or-equal (.getBytes "D"))
-            :key "D" :offset 1}]]
+          [{:ks (sut/last-less-than (.getBytes "A"))
+            :key "A"
+            :offset 0}
+           {:ks (sut/last-less-or-equal (.getBytes "B"))
+            :key "B"
+            :offset 0}
+           {:ks (sut/first-greater-than (.getBytes "C"))
+            :key "C"
+            :offset 1}
+           {:ks (sut/first-greater-or-equal (.getBytes "D"))
+            :key "D"
+            :offset 1}]]
       (doseq [ks key-selectors-and-expected-results]
-        (is (= (bs/to-string (get-key (:ks ks))) (:key ks))
-            (= (get-offset (:ks ks)) (:offset ks)))))))
+        (is (=  (:key ks) (bs/to-string (sut/get-key (:ks ks))))
+            (=  (:offset ks) (sut/get-offset (:ks ks))))))))
 
 
-(deftest test-add
-  (let [ks-1 (last-less-than (.getBytes "A"))
-        new-ks-1 (add ks-1 10)
-        ks-2 (first-greater-than (.getBytes "A"))
-        new-ks-2 (add ks-2 -5)]
-    (is (= (get-offset new-ks-1) 10)
-        (= (get-offset new-ks-2) -4))))
+(deftest test-add-offset-to-key-selectors
+  (let [ks-1 (sut/last-less-than (.getBytes "A"))
+        new-ks-1 (sut/add ks-1 10)
+        ks-2 (sut/first-greater-than (.getBytes "A"))
+        new-ks-2 (sut/add ks-2 -5)]
+    (is (=  10 (sut/get-offset new-ks-1))
+        (=  -4 (sut/get-offset new-ks-2)))))

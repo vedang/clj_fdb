@@ -1,31 +1,28 @@
 (ns me.vedang.clj-fdb.transaction
   (:refer-clojure :exclude [get set])
-  (:import
-    clojure.lang.IFn
-    (com.apple.foundationdb
-      Range
-      Transaction
-      TransactionContext)
-    java.util.function.Function))
+  (:import clojure.lang.IFn
+           [com.apple.foundationdb Range Transaction TransactionContext]
+           com.apple.foundationdb.async.AsyncIterable
+           java.util.concurrent.CompletableFuture
+           java.util.function.Function))
 
-
-(defn- as-java-fn
+(defn- as-function
   "Takes a clojure fn and returns a `reify`'d version which implements
   `java.util.function.Function`.
 
   Note: The fn should accept a single argument."
   [f]
   (reify Function
-    (apply
-      [this arg]
+    (apply [_this arg]
       (f arg))))
 
 
 (defn run
-  "Takes a `TransactionContext` and a `fn`, and runs the function
-  against once against this Transaction"
-  [^TransactionContext tc ^IFn tc-fn]
-  (.run tc (as-java-fn tc-fn)))
+  "Takes a `TransactionContext` and a `fn`, and runs the function once
+  against this Transaction. The call blocks while user code is
+  executing, returning the result of that code on completion."
+  [^TransactionContext tc ^IFn tr-fn]
+  (.run tc (as-function tr-fn)))
 
 
 (defn set
@@ -34,14 +31,14 @@
   (.set tr k v))
 
 
-(defn get
+(defn ^CompletableFuture get
   "Gets a value from the database. The call will return null if the
   key is not present in the database."
   [^Transaction tr ^"[B" k]
   (.get tr k))
 
 
-(defn get-range
+(defn ^AsyncIterable get-range
   "Gets an ordered range of keys and values from the database. The
   begin and end keys are specified by byte[] arrays, with the begin
   key inclusive and the end key exclusive. Ranges are returned from

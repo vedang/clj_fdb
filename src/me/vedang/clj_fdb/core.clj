@@ -1,22 +1,13 @@
 (ns me.vedang.clj-fdb.core
   (:refer-clojure :exclude [get set])
-  (:require
-    [byte-streams :as bs]
-    [me.vedang.clj-fdb.internal.byte-conversions :refer [byte-array-class]]
-    [me.vedang.clj-fdb.subspace.subspace :as fsubspace]
-    [me.vedang.clj-fdb.transaction :as ftr])
-  (:import
-    (com.apple.foundationdb
-      KeyValue
-      Range
-      Transaction
-      TransactionContext)
-    (com.apple.foundationdb.subspace
-      Subspace)
-    (com.apple.foundationdb.tuple
-      Tuple)
-    (java.lang
-      IllegalArgumentException)))
+  (:require [byte-streams :as bs]
+            [me.vedang.clj-fdb.subspace.subspace :as fsubspace]
+            [me.vedang.clj-fdb.transaction :as ftr]
+            [me.vedang.clj-fdb.tuple.tuple :as ftup])
+  (:import [com.apple.foundationdb KeyValue Range Transaction TransactionContext]
+           com.apple.foundationdb.subspace.Subspace
+           com.apple.foundationdb.tuple.Tuple
+           java.lang.IllegalArgumentException))
 
 
 (defn set
@@ -29,7 +20,7 @@
 
   Optionally, you can pass in `:keyfn` and `:valfn` to transform the
   key/value to a byte-array. An exception is thrown if these fns don't
-  return a byte-array. If no conversion fn is provided, we attemp to
+  return a byte-array. If no conversion fn is provided, we attempt to
   convert k/v to byte-array using `byte-streams/to-byte-array`."
   [^TransactionContext tc k v &
    {:keys [keyfn valfn]
@@ -46,7 +37,6 @@
                              "The provided Val Fn did not return a byte-array on input")))
                   (ftr/set tr k-ba v-ba)))]
     (ftr/run tc tr-fn)))
-
 
 (defn get
   "Takes the following:
@@ -222,9 +212,10 @@
 
   and clears the range from db. Returns nil.
 
-  Optionally, you can pass in `:t` as follows:
+  Optionally, you can pass in `t` as follows:
 
-  - `:t` will be used along with `s` to construct namespaced key. `t` should be of type `Tuple`."
+  - `t` will be used along with `s` to construct namespaced key. `t`
+  should be of type `Tuple`."
   ([^TransactionContext tc ^Subspace s]
    (let [subspaced-range (fsubspace/range s)]
      (clear-range tc subspaced-range)))

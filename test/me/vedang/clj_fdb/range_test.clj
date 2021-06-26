@@ -1,7 +1,7 @@
 (ns me.vedang.clj-fdb.range-test
   (:require
     [byte-streams :as bs]
-    [clojure.test :refer :all]
+    [clojure.test :refer [deftest is use-fixtures]]
     [me.vedang.clj-fdb.FDB :as cfdb]
     [me.vedang.clj-fdb.core :as fc]
     [me.vedang.clj-fdb.internal.util :as u]
@@ -17,7 +17,7 @@
 (use-fixtures :each u/test-fixture)
 
 
-(deftest test-range-contructor
+(deftest test-range-constructor
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         test-keys ["bar" "bas" "bbt" "baq" "baz"]
         test-val "TESTVAL"
@@ -28,27 +28,27 @@
         (fn [^Transaction tr]
           (doseq [k test-keys]
             (fc/set tr (ftup/from u/*test-prefix* k) test-val))))
-      (is (= (fc/get-range
-               db
-               (frange/range (ftup/pack (ftup/from u/*test-prefix* "bar"))
-                             (ftup/pack (ftup/from u/*test-prefix* "baz")))
-               :keyfn (comp second ftup/get-items ftup/from-bytes)
-               :valfn #(bs/convert % String))
-             expected-map-1))
-      (is (= (fc/get-range
-               db
-               (frange/range (ftup/pack (ftup/from u/*test-prefix* "a"))
-                             (ftup/pack (ftup/from u/*test-prefix* "z")))
-               :keyfn (comp second ftup/get-items ftup/from-bytes)
-               :valfn #(bs/convert % String))
-             expected-map-2))
-      (is (= (fc/get-range
-               db
-               (frange/range (ftup/pack (ftup/from u/*test-prefix* "c"))
-                             (ftup/pack (ftup/from u/*test-prefix* "z")))
-               :keyfn (comp second ftup/get-items ftup/from-bytes)
-               :valfn #(bs/convert % String))
-             {})))))
+      (is (= expected-map-1
+             (fc/get-range
+              db
+              (frange/range (ftup/pack (ftup/from u/*test-prefix* "bar"))
+                            (ftup/pack (ftup/from u/*test-prefix* "baz")))
+              :keyfn (comp second ftup/get-items ftup/from-bytes)
+              :valfn #(bs/convert % String))))
+      (is (= expected-map-2
+             (fc/get-range
+              db
+              (frange/range (ftup/pack (ftup/from u/*test-prefix* "a"))
+                            (ftup/pack (ftup/from u/*test-prefix* "z")))
+              :keyfn (comp second ftup/get-items ftup/from-bytes)
+              :valfn #(bs/convert % String))))
+      (is (= {}
+             (fc/get-range
+              db
+              (frange/range (ftup/pack (ftup/from u/*test-prefix* "c"))
+                            (ftup/pack (ftup/from u/*test-prefix* "z")))
+              :keyfn (comp second ftup/get-items ftup/from-bytes)
+              :valfn #(bs/convert % String)))))))
 
 
 (deftest test-range-starts-with
@@ -66,7 +66,8 @@
         (fn [^Transaction tr]
           (doseq [k test-keys]
             (fc/set tr (apply ftup/from u/*test-prefix* k) test-val))))
-      (is (= (fc/get-range db
+      (is (= expected-map-1
+             (fc/get-range db
                            (-> u/*test-prefix*
                                (ftup/from "bar")
                                ftup/pack
@@ -74,10 +75,10 @@
                            :keyfn (comp (partial drop 1)
                                         ftup/get-items
                                         ftup/from-bytes)
-                           :valfn #(bs/convert % String))
-             expected-map-1))
+                           :valfn #(bs/convert % String))))
       ;; startswith in tuples requires exact match
-      (is (= (fc/get-range db
+      (is (= {}
+             (fc/get-range db
                            (-> u/*test-prefix*
                                (ftup/from "bb")
                                ftup/pack
@@ -85,9 +86,9 @@
                            :keyfn (comp (partial drop 1)
                                         ftup/get-items
                                         ftup/from-bytes)
-                           :valfn #(bs/convert % String))
-             {}))
-      (is (= (fc/get-range db
+                           :valfn #(bs/convert % String))))
+      (is (= expected-map-2
+             (fc/get-range db
                            (-> u/*test-prefix*
                                (ftup/from "bbz")
                                ftup/pack
@@ -95,5 +96,4 @@
                            :keyfn (comp (partial drop 1)
                                         ftup/get-items
                                         ftup/from-bytes)
-                           :valfn #(bs/convert % String))
-             expected-map-2)))))
+                           :valfn #(bs/convert % String)))))))
