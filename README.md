@@ -18,7 +18,6 @@ At the moment, this ns provides the following functions:
     - clear
     - get-range
     - clear-range
-    - clear-subspaced-key
     - get-subspaced-range
     - clear-subspaced-range
 

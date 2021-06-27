@@ -54,9 +54,12 @@
   - key to be cleared `k`
 
   and clears the key from the db. Returns nil."
-  [^TransactionContext tc k]
-  (let [k-ba (build-byte-array k)]
-    (ftr/run tc (fn [^Transaction tr] (ftr/clear-key tr k-ba)))))
+  ([^TransactionContext tc k]
+   (let [k-ba (build-byte-array k)]
+     (ftr/run tc (fn [^Transaction tr] (ftr/clear-key tr k-ba)))))
+  ([^TransactionContext tc s k]
+   (let [k-ba (build-byte-array s k)]
+     (ftr/run tc (fn [^Transaction tr] (ftr/clear-key tr k-ba))))))
 
 
 (defn get-range
@@ -92,17 +95,6 @@
   [^TransactionContext tc ^Range rg]
   (let [tr-fn (fn [^Transaction tr] (ftr/clear-range tr rg))]
     (ftr/run tc tr-fn)))
-
-
-(defn clear-subspaced-key
-  "Takes the following:
-  - TransactionContext `tc`
-  - Subspace `s` which will used to namespace the key
-  - Tuple `t` will be used along with `s` to construct key
-
-  and clears the Subspaced key from db. Returns nil."
-  [^TransactionContext tc ^Subspace s ^Tuple t]
-  (clear tc (fsubspace/pack s t)))
 
 
 (defn get-subspaced-range

@@ -130,9 +130,7 @@
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from) "value")
         (is (= "value" (fc/get db prefixed-subspace (ftup/from) bs/to-string)))
-        (fc/clear-subspaced-key db
-                                prefixed-subspace
-                                (ftup/from))
+        (fc/clear db prefixed-subspace (ftup/from))
         (is (nil? (fc/get db prefixed-subspace (ftup/from) bs/to-string)))))))
 
 
