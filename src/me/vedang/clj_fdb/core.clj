@@ -53,24 +53,10 @@
   - TransactionContext `tc`
   - key to be cleared `k`
 
-  and clears the key from the db. Returns nil.
-
-  Optionally, you can pass in `:keyfn` as follows:
-
-  - `:keyfn` should take the key as input and transform it to a
-  byte-array. An exception is thrown if the return value is not a
-  byte-array. If no `:keyfn` is provided, we convert the key to a
-  byte-array using `byte-streams/to-byte-array`."
-  [^TransactionContext tc k &
-   {:keys [keyfn]
-    :or {keyfn bs/to-byte-array}}]
-  (let [tr-fn (fn [^Transaction tr]
-                (let [k-ba (keyfn k)]
-                  (when-not (instance? byte-array-class k-ba)
-                    (throw (IllegalArgumentException.
-                             "The provided Key Fn did not return a byte-array on input")))
-                  (ftr/clear-key tr k-ba)))]
-    (ftr/run tc tr-fn)))
+  and clears the key from the db. Returns nil."
+  [^TransactionContext tc k]
+  (let [k-ba (build-byte-array k)]
+    (ftr/run tc (fn [^Transaction tr] (ftr/clear-key tr k-ba)))))
 
 
 (defn get-range
@@ -134,8 +120,7 @@
 
   and clears the Subspaced key from db. Returns nil."
   [^TransactionContext tc ^Subspace s ^Tuple t]
-  (clear tc t
-         :keyfn #(fsubspace/pack s %)))
+  (clear tc (fsubspace/pack s t)))
 
 
 (defn get-subspaced-range
