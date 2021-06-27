@@ -94,24 +94,6 @@
     (ftr/run tc tr-fn)))
 
 
-(defn get-subspaced-key
-  "Takes the following:
-  - TransactionContext `tc`
-  - Subspace `s` which will be used to namespace the key
-  - Tuple `t` will be used along with `s` to construct key
-
-  and returns byte-array `v` against key constructed using `s` and `t`.
-
-  Optionally, you can pass in `:valfn` as follows:
-
-  - `:valfn` should accept a byte-array and convert it as desired by the caller.
-  If no `:valfn` is provided, we return the byte-array as is."
-  ([^TransactionContext tc ^Subspace s ^Tuple t
-    & {:keys [valfn]
-       :or {valfn identity}}]
-   (get tc (fsubspace/pack s t) valfn)))
-
-
 (defn clear-subspaced-key
   "Takes the following:
   - TransactionContext `tc`

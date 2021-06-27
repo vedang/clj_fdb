@@ -101,16 +101,10 @@
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from) "value")
         (is (= "value"
-               (fc/get-subspaced-key db
-                                     prefixed-subspace
-                                     (ftup/from)
-                                     :valfn #(bs/convert % String))))
+               (fc/get db prefixed-subspace (ftup/from) bs/to-string)))
         (fc/set db prefixed-subspace (ftup/from) "New value")
         (is (= "New value"
-               (fc/get-subspaced-key db
-                                     prefixed-subspace
-                                     (ftup/from)
-                                     :valfn #(bs/convert % String)))))))
+               (fc/get db prefixed-subspace (ftup/from) bs/to-string))))))
 
   (testing "Get/Set Subspaced Key using non-empty Tuple"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
@@ -119,19 +113,13 @@
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from "a") "value")
         (= "value"
-           (fc/get-subspaced-key db
-                                 prefixed-subspace
-                                 (ftup/from "a")
-                                 :valfn #(bs/convert % String))))))
+           (fc/get db prefixed-subspace (ftup/from "a") bs/to-string)))))
   (testing "Get non-existent Subspaced Key"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
           prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
-        (is (nil? (fc/get-subspaced-key db
-                                        prefixed-subspace
-                                        (ftup/from "a")
-                                        :valfn #(bs/convert % String))))))))
+        (is (nil? (fc/get db prefixed-subspace (ftup/from "a") bs/to-string)))))))
 
 
 (deftest test-clear-subspaced-key
@@ -141,18 +129,11 @@
           prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from) "value")
-        (is (= (fc/get-subspaced-key db
-                                     prefixed-subspace
-                                     (ftup/from)
-                                     :valfn #(bs/convert % String))
-               "value"))
+        (is (= "value" (fc/get db prefixed-subspace (ftup/from) bs/to-string)))
         (fc/clear-subspaced-key db
                                 prefixed-subspace
                                 (ftup/from))
-        (is (nil? (fc/get-subspaced-key db
-                                        prefixed-subspace
-                                        (ftup/from)
-                                        :valfn #(bs/convert % String))))))))
+        (is (nil? (fc/get db prefixed-subspace (ftup/from) bs/to-string)))))))
 
 
 (deftest test-get-subspaced-range
@@ -188,5 +169,4 @@
                                        :keyfn (comp last ftup/get-items ftup/from-bytes)
                                        :valfn #(bs/convert % String))))
         (fc/clear-subspaced-range db prefixed-subspace)
-        (is (nil? (fc/get-subspaced-key db prefixed-subspace (ftup/from)
-                                        :valfn #(bs/convert % String))))))))
+        (is (nil? (fc/get db prefixed-subspace (ftup/from) bs/to-string)))))))

@@ -18,7 +18,6 @@ At the moment, this ns provides the following functions:
     - clear
     - get-range
     - clear-range
-    - get-subspaced-key
     - clear-subspaced-key
     - get-subspaced-range
     - clear-subspaced-range
@@ -104,8 +103,7 @@ in the core ns:
     (with-open [db (cfdb/open fdb)]
       (fc/set db subspace (ftup/from "A") "Value A")
       (fc/set db subspace (ftup/from "B") "Value B")
-      (fc/get-subspaced-key db subspace (ftup/from "A")
-                            :valfn #(bs/convert % String))
+      (fc/get db subspace (ftup/from "A") #(bs/convert % String))
       (fc/get-subspaced-range db subspace (ftup/from)
                               :keyfn (comp ftup/get-items ftup/from-bytes)
                               :valfn #(bs/convert % String))))
