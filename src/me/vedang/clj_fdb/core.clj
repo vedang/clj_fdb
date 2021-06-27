@@ -1,9 +1,10 @@
 (ns me.vedang.clj-fdb.core
   (:refer-clojure :exclude [get set])
   (:require [byte-streams :as bs]
+            [me.vedang.clj-fdb.internal.byte-conversions
+             :refer [build-byte-array byte-array-class]]
             [me.vedang.clj-fdb.subspace.subspace :as fsubspace]
-            [me.vedang.clj-fdb.transaction :as ftr]
-            [me.vedang.clj-fdb.tuple.tuple :as ftup])
+            [me.vedang.clj-fdb.transaction :as ftr])
   (:import [com.apple.foundationdb KeyValue Range Transaction TransactionContext]
            com.apple.foundationdb.subspace.Subspace
            com.apple.foundationdb.tuple.Tuple
@@ -37,6 +38,7 @@
                              "The provided Val Fn did not return a byte-array on input")))
                   (ftr/set tr k-ba v-ba)))]
     (ftr/run tc tr-fn)))
+
 
 (defn get
   "Takes the following:
