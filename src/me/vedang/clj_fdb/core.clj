@@ -14,30 +14,21 @@
 (defn set
   "Takes the following:
   - TransactionContext `tc`
-  - key to be stored `k`
-  - key to be stored `v`
+  - key to be stored `k` (should be byte-array, or convertible to byte-array)
+  - value to be stored `v` (should be byte-array, or convertible to byte-array)
 
   and stores `v` against `k` in FDB. Returns nil.
 
-  Optionally, you can pass in `:keyfn` and `:valfn` to transform the
-  key/value to a byte-array. An exception is thrown if these fns don't
-  return a byte-array. If no conversion fn is provided, we attempt to
-  convert k/v to byte-array using `byte-streams/to-byte-array`."
-  [^TransactionContext tc k v &
-   {:keys [keyfn valfn]
-    :or {keyfn bs/to-byte-array
-         valfn bs/to-byte-array}}]
-  (let [tr-fn (fn [^Transaction tr]
-                (let [k-ba (keyfn k)
-                      v-ba (valfn v)]
-                  (when-not (instance? byte-array-class k-ba)
-                    (throw (IllegalArgumentException.
-                             "The provided Key Fn did not return a byte-array on input")))
-                  (when-not (instance? byte-array-class v-ba)
-                    (throw (IllegalArgumentException.
-                             "The provided Val Fn did not return a byte-array on input")))
-                  (ftr/set tr k-ba v-ba)))]
-    (ftr/run tc tr-fn)))
+  Optionally, you can also pass a `Subspace` `s` under which the key
+  will be stored. "
+  ([^TransactionContext tc k v]
+   (let [k-ba (build-byte-array k)
+         v-ba (build-byte-array v)]
+     (ftr/run tc (fn [^Transaction tr] (ftr/set tr k-ba v-ba)))))
+  ([^TransactionContext tc s k v]
+   (let [k-ba (build-byte-array s k)
+         v-ba (build-byte-array v)]
+     (ftr/run tc (fn [^Transaction tr] (ftr/set tr k-ba v-ba))))))
 
 
 (defn get
@@ -128,27 +119,6 @@
   [^TransactionContext tc ^Range rg]
   (let [tr-fn (fn [^Transaction tr] (ftr/clear-range tr rg))]
     (ftr/run tc tr-fn)))
-
-
-(defn set-subspaced-key
-  "Takes the following:
-  - TransactionContext `tc`
-  - Subspace `s` which will be used to namespace the key
-  - Tuple `t` will be used along with `s` to construct key
-  - Value to be stored `v`
-
-  and stores `v` against key constructed using `s` and `t` in DB. Returns nil.
-
-  Optionally, you can pass in `:valfn` as follows:
-
-  - `:valfn` to transform the `v` to a byte-array. If `:valfn` is not provided,
-  `bs/to-byte-array` is used to transform `v`."
-  ([^TransactionContext tc ^Subspace s ^Tuple t v
-    & {:keys [valfn]
-       :or {valfn bs/to-byte-array}}]
-   (set tc t v
-        :keyfn #(fsubspace/pack s %)
-        :valfn valfn)))
 
 
 (defn get-subspaced-key

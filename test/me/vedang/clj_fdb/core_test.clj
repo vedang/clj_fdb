@@ -24,8 +24,8 @@
           v (int 1)
           fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
       (with-open [^Database db (cfdb/open fdb)]
-        (fc/set db k v)
-        (is (= v (fc/get db k :valfn #(bs/convert %1 Integer))))))))
+        (fc/set db k (bs/to-byte-array v))
+        (is (= v (fc/get db k :valfn #(bs/convert % Integer))))))))
 
 
 (deftest test-get-non-existent-key
@@ -42,8 +42,8 @@
           k (ftup/from u/*test-prefix* "foo")
           v (int 1)]
       (with-open [^Database db (cfdb/open fdb)]
-        (fc/set db k v)
-        (is (= v (fc/get db k :valfn #(bs/convert %1 Integer))))
+        (fc/set db k (bs/to-byte-array v))
+        (is (= v (fc/get db k :valfn #(bs/convert % Integer))))
         (fc/clear db k)
         (is (nil? (fc/get db k)))))))
 
@@ -62,7 +62,7 @@
           (fn [^Transaction tr]
             (doseq [k input-keys]
               (let [k (ftup/from u/*test-prefix* k)]
-                (fc/set tr k v)))))
+                (fc/set tr k (bs/to-byte-array v))))))
 
         (is (= expected-map
                (fc/get-range db
@@ -85,7 +85,7 @@
           (fn [^Transaction tr]
             (doseq [k input-keys]
               (let [k (ftup/from u/*test-prefix* k)]
-                (fc/set tr k v)))))
+                (fc/set tr k (bs/to-byte-array v))))))
         (fc/clear-range db rg)
 
         (is (= v (fc/get db (ftup/from u/*test-prefix* excluded-k)
@@ -98,19 +98,13 @@
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
           prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
-        (fc/set-subspaced-key db
-                              prefixed-subspace
-                              (ftup/from)
-                              "value")
+        (fc/set db prefixed-subspace (ftup/from) "value")
         (is (= "value"
                (fc/get-subspaced-key db
                                      prefixed-subspace
                                      (ftup/from)
                                      :valfn #(bs/convert % String))))
-        (fc/set-subspaced-key db
-                              prefixed-subspace
-                              (ftup/from)
-                              "New value")
+        (fc/set db prefixed-subspace (ftup/from) "New value")
         (is (= "New value"
                (fc/get-subspaced-key db
                                      prefixed-subspace
@@ -122,10 +116,7 @@
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
           prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
-        (fc/set-subspaced-key db
-                              prefixed-subspace
-                              (ftup/from "a")
-                              "value")
+        (fc/set db prefixed-subspace (ftup/from "a") "value")
         (= "value"
            (fc/get-subspaced-key db
                                  prefixed-subspace
@@ -148,10 +139,7 @@
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
           prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
-        (fc/set-subspaced-key db
-                              prefixed-subspace
-                              (ftup/from)
-                              "value")
+        (fc/set db prefixed-subspace (ftup/from) "value")
         (is (= (fc/get-subspaced-key db
                                      prefixed-subspace
                                      (ftup/from)
@@ -176,7 +164,7 @@
           expected-map {"bar" v "car" v "foo" v "gum" v}]
       (with-open [^Database db (cfdb/open fdb)]
         (doseq [k input-keys]
-          (fc/set-subspaced-key db prefixed-subspace (ftup/from k) v))
+          (fc/set db prefixed-subspace (ftup/from k) v))
         (is (= expected-map
                (fc/get-subspaced-range db prefixed-subspace (ftup/from)
                                        :keyfn (comp last ftup/get-items ftup/from-bytes)
@@ -193,7 +181,7 @@
           expected-map {"bar" v "car" v "foo" v "gum" v}]
       (with-open [^Database db (cfdb/open fdb)]
         (doseq [k input-keys]
-          (fc/set-subspaced-key db prefixed-subspace (ftup/from k) v))
+          (fc/set db prefixed-subspace (ftup/from k) v))
         (is (= expected-map
                (fc/get-subspaced-range db prefixed-subspace (ftup/from)
                                        :keyfn (comp last ftup/get-items ftup/from-bytes)
