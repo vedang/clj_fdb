@@ -1,12 +1,9 @@
 (ns me.vedang.clj-fdb.subspace.subspace
   (:refer-clojure :exclude [contains? range get])
-  (:import
-    com.apple.foundationdb.Range
-    (com.apple.foundationdb.subspace
-      Subspace)
-    (com.apple.foundationdb.tuple
-      Tuple)))
-
+  (:require [me.vedang.clj-fdb.tuple.tuple :as ftup])
+  (:import com.apple.foundationdb.Range
+           com.apple.foundationdb.subspace.Subspace
+           com.apple.foundationdb.tuple.Tuple))
 
 (defn ^Subspace create-subspace
   "Constructor for a subspace formed with the specified prefix Tuple."
@@ -35,11 +32,15 @@
 
 (defn ^"[B" pack
   "Gets the key encoding the prefix used for this Subspace.
-  If a tuple is passed, key encoding is suffixed with passed tuple."
+  If a tuple is passed, key encoding is suffixed with passed tuple. If
+  a non-tuple is passed, it is converted to a tuple and used as a
+  suffix."
   ([^Subspace s]
    (.pack s))
-  ([^Subspace s ^Tuple t]
-   (.pack s t)))
+  ([^Subspace s t]
+   (condp instance? t
+     Tuple (.pack s ^Tuple t)
+     (.pack s ^Tuple (ftup/from t)))))
 
 
 (defn ^Tuple unpack
