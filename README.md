@@ -60,6 +60,9 @@ https://vedang.github.io/clj_fdb/
 Here is some test code to demonstrate how to use the functions defined
 in the core ns:
 ```clojure
+;; To run this code, you will need to require the following in your project:
+;; [me.vedang/clj-fdb "0.1.2"]
+;; [byte-streams "0.2.4"]
 (comment
   (require '[byte-streams :as bs]
            '[me.vedang.clj-fdb.FDB :as cfdb]
@@ -77,7 +80,7 @@ in the core ns:
   ;; Read this value back in the DB.
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
-      (fc/get db "a:test:key" :valfn bs/to-string)))
+      (fc/get db "a:test:key" bs/to-string)))
   ;; => "some value"
 
   ;; FDB's Tuple Layer is super handy for efficient range reads. Each

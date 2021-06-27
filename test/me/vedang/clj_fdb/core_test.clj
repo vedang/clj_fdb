@@ -25,7 +25,7 @@
           fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db k (bs/to-byte-array v))
-        (is (= v (fc/get db k :valfn #(bs/convert % Integer))))))))
+        (is (= v (fc/get db k #(bs/convert % Integer))))))))
 
 
 (deftest test-get-non-existent-key
@@ -33,7 +33,7 @@
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           k (ftup/from u/*test-prefix* "non-existent")]
       (with-open [^Database db (cfdb/open fdb)]
-        (is (nil? (fc/get db k)))))))
+        (is (nil? (fc/get db k identity)))))))
 
 
 (deftest test-clear-key
@@ -43,9 +43,9 @@
           v (int 1)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db k (bs/to-byte-array v))
-        (is (= v (fc/get db k :valfn #(bs/convert % Integer))))
+        (is (= v (fc/get db k #(bs/convert % Integer))))
         (fc/clear db k)
-        (is (nil? (fc/get db k)))))))
+        (is (nil? (fc/get db k identity)))))))
 
 
 (deftest test-get-range
@@ -88,8 +88,9 @@
                 (fc/set tr k (bs/to-byte-array v))))))
         (fc/clear-range db rg)
 
-        (is (= v (fc/get db (ftup/from u/*test-prefix* excluded-k)
-                         :valfn #(bs/convert % Integer))))))))
+        (is (= v (fc/get db
+                         (ftup/from u/*test-prefix* excluded-k)
+                         #(bs/convert % Integer))))))))
 
 
 (deftest test-get-set-subspaced-key

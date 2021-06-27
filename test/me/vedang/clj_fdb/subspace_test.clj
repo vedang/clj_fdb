@@ -11,19 +11,14 @@
 (deftest test-prefixed-subspace
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         random-prefix (str "prefixed-subspace-test:" (u/rand-str 5))
-        prefix-subspace (fss/create-subspace (ftup/from random-prefix))]
+        prefix-subspace (fss/create-subspace (ftup/from random-prefix))
+        k-ba (fss/pack prefix-subspace (ftup/from "test-key"))]
     (with-open [^Database db (cfdb/open fdb)]
-      (fc/set db
-              (fss/pack prefix-subspace (ftup/from "test-key"))
-              "subspace value")
-      (is (= "subspace value"
-             (fc/get db
-                     (fss/pack prefix-subspace (ftup/from "test-key"))
-                     :valfn #(bs/convert % String))))
-      (is (fss/contains? prefix-subspace
-                         (fss/pack prefix-subspace (ftup/from "test-key"))))
+      (fc/set db k-ba "subspace value")
+      (is (= "subspace value" (fc/get db k-ba bs/to-string)))
+      (is (fss/contains? prefix-subspace k-ba))
       (is (= (fss/unpack prefix-subspace (fss/pack prefix-subspace (ftup/from)))
              (ftup/from)))
-      (is (= (fss/unpack prefix-subspace
-                         (fss/pack prefix-subspace (ftup/from "test")))
-             (ftup/from "test"))))))
+      (is (= (ftup/from "test")
+             (fss/unpack prefix-subspace
+                         (fss/pack prefix-subspace (ftup/from "test"))))))))

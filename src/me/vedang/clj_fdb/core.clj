@@ -34,31 +34,18 @@
 (defn get
   "Takes the following:
   - TransactionContext `tc`
-  - key to be fetched `k`
+  - key to be fetched `k` (should be byte-array, or convertible to byte-array)
+  - Function `parsefn` taking the stored byte-array at `k` and
+  converting it to the appropriate return value `v`
 
-  and returns byte-array `v` against `k` in FDB.
-
-  Optionally, you can pass in `:keyfn` and `:valfn` as follows:
-
-  - `:keyfn` should take the key as input and transform it to a
-  byte-array. An exception is thrown if the return value is not a
-  byte-array. If no `:keyfn` is provided, we convert the key to a
-  byte-array using `byte-streams/to-byte-array`.
-  - `:valfn` should accept a byte-array and convert it as desired by
-  the caller. If no `:valfn` is provided, we return the byte-array as
-  is."
-  [^TransactionContext tc k &
-   {:keys [keyfn valfn]
-    :or {keyfn bs/to-byte-array
-         valfn identity}}]
-  (let [tr-fn (fn [^Transaction tr]
-                (let [k-ba (keyfn k)]
-                  (when-not (instance? byte-array-class k-ba)
-                    (throw (IllegalArgumentException.
-                             "The provided Key Fn did not return a byte-array on input")))
-                  (when-let [v (deref (ftr/get tr k-ba))]
-                    (valfn v))))]
-    (ftr/run tc tr-fn)))
+  Optionally, you can also pass a `Subspace` `s`, under which the key
+  is stored."
+  ([^TransactionContext tc k parsefn]
+   (let [k-ba (build-byte-array k)
+         v-ba (ftr/run tc (fn [^Transaction tr] (deref (ftr/get tr k-ba))))]
+     (when v-ba (parsefn v-ba))))
+  ([^TransactionContext tc s k parsefn]
+   (get tc (build-byte-array s k) parsefn)))
 
 
 (defn clear
@@ -136,9 +123,7 @@
   ([^TransactionContext tc ^Subspace s ^Tuple t
     & {:keys [valfn]
        :or {valfn identity}}]
-   (get tc t
-        :keyfn #(fsubspace/pack s %)
-        :valfn valfn)))
+   (get tc (fsubspace/pack s t) valfn)))
 
 
 (defn clear-subspaced-key
