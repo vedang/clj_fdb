@@ -158,9 +158,8 @@ https://apple.github.io/foundationdb/class-scheduling-java.html
 This library has taken shape as a side-effect of trying to write that
 example in Clojure.
 
-You can find the Class Scheduler example in the top-level `examples/`
-folder
-([here](https://github.com/vedang/clj_fdb/blob/master/src/examples/class_scheduling.clj)).
+You can find the Class Scheduler example
+([here](https://github.com/vedang/farstar/blob/master/src/farstar/class_scheduling.clj)).
 This gives the reader a good idea of how to use `clj-fdb`. Refer to
 the comment block at the end of the example for how to run the
 example.
