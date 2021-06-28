@@ -67,8 +67,8 @@
         (is (= expected-map
                (fc/get-range db
                              rg
-                             :keyfn (comp second ftup/get-items ftup/from-bytes)
-                             :valfn #(bs/convert %1 Integer))))))))
+                             (comp second ftup/get-items ftup/from-bytes)
+                             #(bs/convert %1 Integer))))))))
 
 
 (deftest test-clear-range

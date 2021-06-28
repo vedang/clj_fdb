@@ -65,25 +65,32 @@
 (defn get-range
   "Takes the following:
   - TransactionContext `tc`
-  - Range of keys to fetch `rg`
+  - Range of keys to fetch or a Subspace `r`
+  - IF `r` is a Subspace, can also accept `t`, a Tuple within that Subspace.
+  - `keyfn` and `valfn`, to transform the key/value to the correct format.
 
-  and returns a map of key/value pairs (byte-array->byte-array).
+  and returns a map of key/value pairs.
 
-  Optionally, you can pass in `:keyfn` and `:valfn` to transform the
-  key/value to the correct format. `:keyfn` should accept a byte-array
-  representing the key, `:valfn` should accept a byte-array
-  representing the value."
-  [^TransactionContext tc ^Range rg &
-   {:keys [keyfn valfn]
-    :or {keyfn identity
-         valfn identity}}]
-  (let [tr-fn (fn [^Transaction tr]
-                (reduce (fn [acc ^KeyValue kv]
-                          (assoc acc
-                                 (keyfn (.getKey kv)) (valfn (.getValue kv))))
-                        {}
-                        (ftr/get-range tr rg)))]
-    (ftr/run tc tr-fn)))
+  Note that this function is greedy and forces the evaluation of the
+  entire iterable. Use with care. If you want to get a lazy iterator,
+  use the underlying get-range functions from `ftr` or `fsubspace`
+  namespaces."
+  ([^TransactionContext tc r keyfn valfn]
+   (let [rg (condp instance? r
+              Range r
+              Subspace (fsubspace/range r)
+              (throw (IllegalArgumentException.
+                      "r should be either of type Range or of type Subspace")))]
+     (ftr/run tc
+       (fn [^Transaction tr]
+         (reduce (fn [acc ^KeyValue kv]
+                   (assoc acc (keyfn (.getKey kv)) (valfn (.getValue kv))))
+                 {}
+                 (ftr/get-range tr rg))))))
+  ([^TransactionContext tc r t keyfn valfn]
+   (if (instance? Subspace r)
+     (get-range tc (fsubspace/range r t) keyfn valfn)
+     (throw (IllegalArgumentException. "r should be of type Subspace")))))
 
 
 (defn clear-range
@@ -116,9 +123,7 @@
       :or {keyfn identity
            valfn identity}}]
   (let [subspaced-range (fsubspace/range s t)]
-    (get-range tc subspaced-range
-               :keyfn keyfn
-               :valfn valfn)))
+    (get-range tc subspaced-range keyfn valfn)))
 
 
 (defn clear-subspaced-range

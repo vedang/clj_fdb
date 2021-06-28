@@ -29,26 +29,23 @@
           (doseq [k test-keys]
             (fc/set tr (ftup/from u/*test-prefix* k) test-val))))
       (is (= expected-map-1
-             (fc/get-range
-              db
-              (frange/range (ftup/pack (ftup/from u/*test-prefix* "bar"))
-                            (ftup/pack (ftup/from u/*test-prefix* "baz")))
-              :keyfn (comp second ftup/get-items ftup/from-bytes)
-              :valfn #(bs/convert % String))))
+             (fc/get-range db
+                           (frange/range (ftup/pack (ftup/from u/*test-prefix* "bar"))
+                                         (ftup/pack (ftup/from u/*test-prefix* "baz")))
+                           (comp second ftup/get-items ftup/from-bytes)
+                           bs/to-string)))
       (is (= expected-map-2
-             (fc/get-range
-              db
-              (frange/range (ftup/pack (ftup/from u/*test-prefix* "a"))
-                            (ftup/pack (ftup/from u/*test-prefix* "z")))
-              :keyfn (comp second ftup/get-items ftup/from-bytes)
-              :valfn #(bs/convert % String))))
+             (fc/get-range db
+                           (frange/range (ftup/pack (ftup/from u/*test-prefix* "a"))
+                                         (ftup/pack (ftup/from u/*test-prefix* "z")))
+                           (comp second ftup/get-items ftup/from-bytes)
+                           bs/to-string)))
       (is (= {}
-             (fc/get-range
-              db
-              (frange/range (ftup/pack (ftup/from u/*test-prefix* "c"))
-                            (ftup/pack (ftup/from u/*test-prefix* "z")))
-              :keyfn (comp second ftup/get-items ftup/from-bytes)
-              :valfn #(bs/convert % String)))))))
+             (fc/get-range db
+                           (frange/range (ftup/pack (ftup/from u/*test-prefix* "c"))
+                                         (ftup/pack (ftup/from u/*test-prefix* "z")))
+                           (comp second ftup/get-items ftup/from-bytes)
+                           bs/to-string))))))
 
 
 (deftest test-range-starts-with
@@ -72,10 +69,10 @@
                                (ftup/from "bar")
                                ftup/pack
                                frange/starts-with)
-                           :keyfn (comp (partial drop 1)
-                                        ftup/get-items
-                                        ftup/from-bytes)
-                           :valfn #(bs/convert % String))))
+                           (comp (partial drop 1)
+                                 ftup/get-items
+                                 ftup/from-bytes)
+                           bs/to-string)))
       ;; startswith in tuples requires exact match
       (is (= {}
              (fc/get-range db
@@ -83,17 +80,17 @@
                                (ftup/from "bb")
                                ftup/pack
                                frange/starts-with)
-                           :keyfn (comp (partial drop 1)
-                                        ftup/get-items
-                                        ftup/from-bytes)
-                           :valfn #(bs/convert % String))))
+                           (comp (partial drop 1)
+                                 ftup/get-items
+                                 ftup/from-bytes)
+                           bs/to-string)))
       (is (= expected-map-2
              (fc/get-range db
                            (-> u/*test-prefix*
                                (ftup/from "bbz")
                                ftup/pack
                                frange/starts-with)
-                           :keyfn (comp (partial drop 1)
-                                        ftup/get-items
-                                        ftup/from-bytes)
-                           :valfn #(bs/convert % String)))))))
+                           (comp (partial drop 1)
+                                 ftup/get-items
+                                 ftup/from-bytes)
+                           bs/to-string))))))

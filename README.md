@@ -90,8 +90,8 @@ in the core ns:
       (fc/set db (ftup/from "test" "keys" "C") "value C")
       (fc/get-range db
                     (ftup/range (ftup/from "test" "keys"))
-                    :keyfn (comp ftup/get-items ftup/from-bytes)
-                    :valfn bs/to-string)))
+                    (comp ftup/get-items ftup/from-bytes)
+                    bs/to-string)))
   ;; => {["test" "keys" "A"] "value A",
   ;;     ["test" "keys" "B"] "value B",
   ;;     ["test" "keys" "C"] "value C"}
@@ -121,8 +121,8 @@ in the core ns:
           (fc/set tr (ftup/from "test" "keys" "C") "value inside transaction C")
           (fc/get-range tr
                         (ftup/range (ftup/from "test" "keys"))
-                        :keyfn (comp ftup/get-items ftup/from-bytes)
-                        :valfn bs/to-string)))))
+                        (comp ftup/get-items ftup/from-bytes)
+                        bs/to-string)))))
   ;; => {["test" "keys" "A"] "value inside transaction A",
   ;;     ["test" "keys" "B"] "value inside transaction B",
   ;;     ["test" "keys" "C"] "value inside transaction C"}
@@ -140,8 +140,8 @@ in the core ns:
            (catch Exception _
              (fc/get-range db
                            (ftup/range (ftup/from "test" "keys"))
-                           :keyfn (comp ftup/get-items ftup/from-bytes)
-                           :valfn bs/to-string)))))
+                           (comp ftup/get-items ftup/from-bytes)
+                           bs/to-string)))))
   ;; => {["test" "keys" "A"] "value inside transaction A",
   ;;     ["test" "keys" "B"] "value inside transaction B",
   ;;     ["test" "keys" "C"] "value inside transaction C"}
