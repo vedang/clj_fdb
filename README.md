@@ -18,7 +18,6 @@ At the moment, this ns provides the following functions:
     - clear
     - get-range
     - clear-range
-    - clear-subspaced-range
 
 Since FDB only stores data as bytes, these functions will use the
 [byte-streams](https://github.com/ztellman/byte-streams) library to

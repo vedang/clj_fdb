@@ -88,9 +88,10 @@
                  {}
                  (ftr/get-range tr rg))))))
   ([^TransactionContext tc r t keyfn valfn]
-   (if (instance? Subspace r)
+   (if (and (instance? Subspace r) (instance? Tuple t))
      (get-range tc (fsubspace/range r t) keyfn valfn)
-     (throw (IllegalArgumentException. "r should be of type Subspace")))))
+     (throw (IllegalArgumentException.
+             "r should be of type Subspace and t should be of type Tuple")))))
 
 
 (defn clear-range
@@ -99,25 +100,15 @@
   - Range of keys to be cleared `rg`
 
   and clears the range from the db. Returns nil."
-  [^TransactionContext tc ^Range rg]
-  (let [tr-fn (fn [^Transaction tr] (ftr/clear-range tr rg))]
-    (ftr/run tc tr-fn)))
-
-
-(defn clear-subspaced-range
-  "Takes the following:
-  - TransactionContext `tc`
-  - Subspace `s` which will used to namespace the key
-
-  and clears the range from db. Returns nil.
-
-  Optionally, you can pass in `t` as follows:
-
-  - `t` will be used along with `s` to construct namespaced key. `t`
-  should be of type `Tuple`."
-  ([^TransactionContext tc ^Subspace s]
-   (let [subspaced-range (fsubspace/range s)]
-     (clear-range tc subspaced-range)))
-  ([^TransactionContext tc ^Subspace s ^Tuple t]
-   (let [subspaced-range (fsubspace/range s t)]
-     (clear-range tc subspaced-range))))
+  ([^TransactionContext tc r]
+   (let [rg (condp instance? r
+              Range r
+              Subspace (fsubspace/range r)
+              (throw (IllegalArgumentException.
+                      "r should be either of type Range or of type Subspace")))]
+     (ftr/run tc (fn [^Transaction tr] (ftr/clear-range tr rg)))))
+  ([^TransactionContext tc r t]
+   (if (and (instance? Subspace r) (instance? Tuple t))
+     (clear-range tc (fsubspace/range r t))
+     (throw (IllegalArgumentException.
+             "r should be of type Subspace and t should be of type Tuple")))))

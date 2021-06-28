@@ -154,7 +154,7 @@
 
 
 (deftest test-clear-subspaced-range
-  (testing "Clear subspaced range"
+  (testing "Clear subspaced range completely"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
           prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)
@@ -170,5 +170,35 @@
                              (ftup/from)
                              (comp last ftup/get-items ftup/from-bytes)
                              bs/to-string)))
-        (fc/clear-subspaced-range db prefixed-subspace)
-        (is (nil? (fc/get db prefixed-subspace (ftup/from) bs/to-string)))))))
+        (fc/clear-range db prefixed-subspace)
+        (is (nil? (fc/get db prefixed-subspace (ftup/from) bs/to-string))))))
+
+  (testing "Clear subspaced range partially"
+    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
+          random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
+          prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)
+          input-keys ["bar" ["bar" "bar"] ["bar" "baz"] "car" "foo" "gum"]
+          v "10"
+          expected-map {["bar"] v ["car"] v ["foo"] v ["gum"] v ["bar" "bar"] v ["bar" "baz"] v}
+          expected-map-2 {["bar"] v ["car"] v ["foo"] v ["gum"] v}]
+      (with-open [^Database db (cfdb/open fdb)]
+        (doseq [k input-keys]
+          (fc/set db
+                  prefixed-subspace
+                  (if (sequential? k)
+                    (apply ftup/from k)
+                    (ftup/from k))
+                  v))
+        (is (= expected-map
+               (fc/get-range db
+                             prefixed-subspace
+                             (ftup/from)
+                             (comp ftup/get-items (partial fsubspace/unpack prefixed-subspace))
+                             bs/to-string)))
+        (fc/clear-range db prefixed-subspace (ftup/from (first input-keys)))
+        (is (= expected-map-2
+               (fc/get-range db
+                             prefixed-subspace
+                             (ftup/from)
+                             (comp ftup/get-items (partial fsubspace/unpack prefixed-subspace))
+                             bs/to-string)))))))
