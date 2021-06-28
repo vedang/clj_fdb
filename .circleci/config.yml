@@ -1,0 +1,39 @@
+version: 2.1
+
+# Default actions to perform on each Emacs version
+default: &default-steps
+  steps:
+    - checkout
+    # restores saved cache if checksum hasn't changed since the last run
+    - restore_cache:
+        key: cci-clj-fdb-{{ checksum "project.clj" }}
+    - run: sudo apt-get update && sudo apt-get install -y wget make automake leiningen
+    - run: wget https://www.foundationdb.org/downloads/6.3.15/ubuntu/installers/foundationdb-clients_6.3.15-1_amd64.deb
+    - run: wget https://www.foundationdb.org/downloads/6.3.15/ubuntu/installers/foundationdb-server_6.3.15-1_amd64.deb
+    - run: sudo dpkg -i foundationdb-clients_6.3.15-1_amd64.deb foundationdb-server_6.3.15-1_amd64.deb
+    - run: make compile
+    # generate and store cache in the .m2 directory using a key template
+    - save_cache:
+        paths:
+          - ~/.m2
+        key: cci-clj-fdb-{{ checksum "project.clj" }}
+    - run: make test
+
+# Enumerated list of test jobs
+jobs:
+  test-clj-fdb-latest:
+    working_directory: ~/clj-fdb
+    docker:
+      - image: circleci/clojure:lein-2.9.5
+        entrypoint: bash
+    environment:
+      LEIN_ROOT: nbd
+      JVM_OPTS: -Xmx3200m
+    <<: *default-steps
+
+# Running the actual jobs
+workflows:
+  version: 2
+  ci-test-matrix:
+    jobs:
+      - test-clj-fdb-latest
