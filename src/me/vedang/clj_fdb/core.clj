@@ -104,28 +104,6 @@
     (ftr/run tc tr-fn)))
 
 
-(defn get-subspaced-range
-  "Takes the following:
-  - TransactionContext `tc`
-  - Subspace `s` which will used to namespace the key
-  - Tuple `t` will be used along with `s` to construct key
-
-  and returns a map of key/value pairs (byte-array->byte-array).
-
-  Optionally, you can pass in `:keyfn` and `:valfn` as follows:
-
-  - `:keyfn` can be passed to transform key to correct format.
-  If no `:keyfn` is provided, we return the byte-array as is.
-  - `:valfn` can be passed to tranform value to correct format.
-  If no `:valfn` is provided, we return the byte-array as is."
-  [^TransactionContext tc ^Subspace s ^Tuple t
-   & {:keys [keyfn valfn]
-      :or {keyfn identity
-           valfn identity}}]
-  (let [subspaced-range (fsubspace/range s t)]
-    (get-range tc subspaced-range keyfn valfn)))
-
-
 (defn clear-subspaced-range
   "Takes the following:
   - TransactionContext `tc`

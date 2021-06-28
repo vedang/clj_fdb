@@ -18,7 +18,6 @@ At the moment, this ns provides the following functions:
     - clear
     - get-range
     - clear-range
-    - get-subspaced-range
     - clear-subspaced-range
 
 Since FDB only stores data as bytes, these functions will use the
@@ -102,10 +101,12 @@ in the core ns:
     (with-open [db (cfdb/open fdb)]
       (fc/set db subspace (ftup/from "A") "Value A")
       (fc/set db subspace (ftup/from "B") "Value B")
-      (fc/get db subspace (ftup/from "A") #(bs/convert % String))
-      (fc/get-subspaced-range db subspace (ftup/from)
-                              :keyfn (comp ftup/get-items ftup/from-bytes)
-                              :valfn #(bs/convert % String))))
+      (fc/get db subspace (ftup/from "A") bs/to-string)
+      (fc/get-range db
+                    subspace
+                    (ftup/from)
+                    (comp ftup/get-items ftup/from-bytes)
+                    bs/to-string))))
   ;; => {["test" "keys" "A"] "Value A", ["test" "keys" "B"] "Value B"}
 
   ;; FDB's functions are beautifully composable. So you needn't

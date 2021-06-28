@@ -146,9 +146,11 @@
         (doseq [k input-keys]
           (fc/set db prefixed-subspace (ftup/from k) v))
         (is (= expected-map
-               (fc/get-subspaced-range db prefixed-subspace (ftup/from)
-                                       :keyfn (comp last ftup/get-items ftup/from-bytes)
-                                       :valfn #(bs/convert % String))))))))
+               (fc/get-range db
+                             prefixed-subspace
+                             (ftup/from)
+                             (comp last ftup/get-items ftup/from-bytes)
+                             bs/to-string)))))))
 
 
 (deftest test-clear-subspaced-range
@@ -163,8 +165,10 @@
         (doseq [k input-keys]
           (fc/set db prefixed-subspace (ftup/from k) v))
         (is (= expected-map
-               (fc/get-subspaced-range db prefixed-subspace (ftup/from)
-                                       :keyfn (comp last ftup/get-items ftup/from-bytes)
-                                       :valfn #(bs/convert % String))))
+               (fc/get-range db
+                             prefixed-subspace
+                             (ftup/from)
+                             (comp last ftup/get-items ftup/from-bytes)
+                             bs/to-string)))
         (fc/clear-subspaced-range db prefixed-subspace)
         (is (nil? (fc/get db prefixed-subspace (ftup/from) bs/to-string)))))))
