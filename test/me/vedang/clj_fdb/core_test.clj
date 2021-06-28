@@ -21,11 +21,11 @@
 (deftest test-get-set
   (testing "Test the best-case path for `fc/set` and `fc/get`"
     (let [k (ftup/from u/*test-prefix* "foo")
-          v (int 1)
+          v "1"
           fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db k (bs/to-byte-array v))
-        (is (= v (fc/get db k #(bs/convert % Integer))))))))
+        (is (= v (fc/get db k bs/to-string)))))))
 
 
 (deftest test-get-non-existent-key
@@ -40,10 +40,10 @@
   (testing "Test the best-case path for `fc/clear`"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           k (ftup/from u/*test-prefix* "foo")
-          v (int 1)]
+          v "1"]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db k (bs/to-byte-array v))
-        (is (= v (fc/get db k #(bs/convert % Integer))))
+        (is (= v (fc/get db k bs/to-string)))
         (fc/clear db k)
         (is (nil? (fc/get db k identity)))))))
 
@@ -55,7 +55,7 @@
           begin      (ftup/pack (ftup/from u/*test-prefix* "b"))
           end        (ftup/pack (ftup/from u/*test-prefix* "g"))
           rg         (frange/range begin end)
-          v          (int 1)
+          v          "1"
           expected-map {"bar" v "car" v "foo" v}]
       (with-open [^Database db (cfdb/open fdb)]
         (ftr/run db
@@ -68,7 +68,7 @@
                (fc/get-range db
                              rg
                              (comp second ftup/get-items ftup/from-bytes)
-                             #(bs/convert %1 Integer))))))))
+                             bs/to-string)))))))
 
 
 (deftest test-clear-range
@@ -78,7 +78,7 @@
           begin      (ftup/pack (ftup/from u/*test-prefix* "b"))
           end        (ftup/pack (ftup/from u/*test-prefix* "g"))
           rg         (frange/range begin end)
-          v          (int 1)
+          v          "1"
           excluded-k "gum"]
       (with-open [^Database db (cfdb/open fdb)]
         (ftr/run db
@@ -90,7 +90,7 @@
 
         (is (= v (fc/get db
                          (ftup/from u/*test-prefix* excluded-k)
-                         #(bs/convert % Integer))))))))
+                         bs/to-string)))))))
 
 
 (deftest test-get-set-subspaced-key
