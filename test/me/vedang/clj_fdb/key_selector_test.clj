@@ -5,7 +5,7 @@
     [me.vedang.clj-fdb.key-selector :as sut]))
 
 
-(deftest test-constructors-and-getters
+(deftest constructors-and-getters-tests
   (testing "Test getter functions for key-selectors"
     (let [key-selectors-and-expected-results
           [{:ks (sut/last-less-than (.getBytes "A"))
@@ -25,7 +25,7 @@
             (=  (:offset ks) (sut/get-offset (:ks ks))))))))
 
 
-(deftest test-add-offset-to-key-selectors
+(deftest add-offset-to-key-selectors-tests
   (let [ks-1 (sut/last-less-than (.getBytes "A"))
         new-ks-1 (sut/add ks-1 10)
         ks-2 (sut/first-greater-than (.getBytes "A"))

@@ -17,7 +17,7 @@
 (use-fixtures :each u/test-fixture)
 
 
-(deftest test-range-constructor
+(deftest range-constructor-tests
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         test-keys ["bar" "bas" "bbt" "baq" "baz"]
         test-val "TESTVAL"
@@ -48,7 +48,7 @@
                            bs/to-string))))))
 
 
-(deftest test-range-starts-with
+(deftest range-starts-with-tests
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         test-keys [["bar" "a"] ["bar" "ba"]
                    ["bas" "a"] ["bas" "ba"]

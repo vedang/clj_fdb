@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [get set])
   (:require [me.vedang.clj-fdb.internal.byte-conversions
              :refer [build-byte-array]]
-            [me.vedang.clj-fdb.subspace.subspace :as fsubspace]
+            [me.vedang.clj-fdb.subspace.subspace :as fsub]
             [me.vedang.clj-fdb.transaction :as ftr])
   (:import [com.apple.foundationdb KeyValue Range Transaction TransactionContext]
            com.apple.foundationdb.subspace.Subspace
@@ -72,12 +72,12 @@
 
   Note that this function is greedy and forces the evaluation of the
   entire iterable. Use with care. If you want to get a lazy iterator,
-  use the underlying get-range functions from `ftr` or `fsubspace`
+  use the underlying get-range functions from `ftr` or `fsub`
   namespaces."
   ([^TransactionContext tc r keyfn valfn]
    (let [rg (condp instance? r
               Range r
-              Subspace (fsubspace/range r)
+              Subspace (fsub/range r)
               (throw (IllegalArgumentException.
                       "r should be either of type Range or of type Subspace")))]
      (ftr/read tc
@@ -88,7 +88,7 @@
                  (ftr/get-range tr rg))))))
   ([^TransactionContext tc r t keyfn valfn]
    (if (and (instance? Subspace r) (instance? Tuple t))
-     (get-range tc (fsubspace/range r t) keyfn valfn)
+     (get-range tc (fsub/range r t) keyfn valfn)
      (throw (IllegalArgumentException.
              "r should be of type Subspace and t should be of type Tuple")))))
 
@@ -102,12 +102,12 @@
   ([^TransactionContext tc r]
    (let [rg (condp instance? r
               Range r
-              Subspace (fsubspace/range r)
+              Subspace (fsub/range r)
               (throw (IllegalArgumentException.
                       "r should be either of type Range or of type Subspace")))]
      (ftr/run tc (fn [^Transaction tr] (ftr/clear-range tr rg)))))
   ([^TransactionContext tc r t]
    (if (and (instance? Subspace r) (instance? Tuple t))
-     (clear-range tc (fsubspace/range r t))
+     (clear-range tc (fsub/range r t))
      (throw (IllegalArgumentException.
              "r should be of type Subspace and t should be of type Tuple")))))

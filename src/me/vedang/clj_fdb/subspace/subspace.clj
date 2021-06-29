@@ -5,7 +5,7 @@
            com.apple.foundationdb.subspace.Subspace
            com.apple.foundationdb.tuple.Tuple))
 
-(defn ^Subspace create-subspace
+(defn ^Subspace create
   "Constructor for a subspace formed with the specified prefix Tuple."
   ([^Tuple prefix]
    (Subspace. prefix))

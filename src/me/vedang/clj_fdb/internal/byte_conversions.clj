@@ -1,5 +1,5 @@
 (ns me.vedang.clj-fdb.internal.byte-conversions
-  (:require [me.vedang.clj-fdb.subspace.subspace :as fsubspace]
+  (:require [me.vedang.clj-fdb.subspace.subspace :as fsub]
             [me.vedang.clj-fdb.tuple.tuple :as ftup])
   (:import com.apple.foundationdb.subspace.Subspace
            com.apple.foundationdb.tuple.Tuple))
@@ -22,7 +22,7 @@
              "I don't know how to convert input data to a byte-array"))))
   ([s k]
    (condp instance? s
-     Subspace (fsubspace/pack s k)
+     Subspace (fsub/pack s k)
      ;; I will add Directory layer support here soon.
      (throw (IllegalArgumentException.
              "I don't know how to convert input data to a byte-array")))))

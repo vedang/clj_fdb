@@ -70,7 +70,7 @@ in the core ns:
            '[me.vedang.clj-fdb.core :as fc]
            '[me.vedang.clj-fdb.transaction :as ftr]
            '[me.vedang.clj-fdb.tuple.tuple :as ftup]
-           '[me.vedang.clj-fdb.subspace.subspace :as fsubspace])
+           '[me.vedang.clj-fdb.subspace.subspace :as fsub])
 
   ;; Set a value in the DB.
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
@@ -101,7 +101,7 @@ in the core ns:
 
   ;; FDB's Subspace Layer provides a neat way to logically namespace keys.
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-        subspace (fsubspace/create-subspace (ftup/from "test" "keys"))]
+        subspace (fsub/create (ftup/from "test" "keys"))]
     (with-open [db (cfdb/open fdb)]
       (fc/set db subspace (ftup/from "A") (ftup/from "Value A"))
       (fc/set db subspace (ftup/from "B") (ftup/from "Value B"))
@@ -109,7 +109,7 @@ in the core ns:
   ;; => ["Value A"]
 
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-        subspace (fsubspace/create-subspace (ftup/from "test" "keys"))]
+        subspace (fsub/create (ftup/from "test" "keys"))]
     (with-open [db (cfdb/open fdb)]
       (fc/set db subspace (ftup/from "A") (ftup/from "Value A"))
       (fc/set db subspace (ftup/from "B") (ftup/from "Value B"))

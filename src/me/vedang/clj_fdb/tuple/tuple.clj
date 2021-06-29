@@ -1,10 +1,7 @@
 (ns me.vedang.clj-fdb.tuple.tuple
   (:refer-clojure :exclude [range])
-  (:import
-    com.apple.foundationdb.Range
-    (com.apple.foundationdb.tuple
-      Tuple)))
-
+  (:import com.apple.foundationdb.Range
+           com.apple.foundationdb.tuple.Tuple))
 
 (defn from
   "Creates a new Tuple from a variable number of elements.
@@ -24,7 +21,7 @@
 (defn get-items
   "Gets the unserialized contents of this Tuple."
   [^Tuple t]
-  (.getItems t))
+  (vec (.getItems t)))
 
 
 (defn pack

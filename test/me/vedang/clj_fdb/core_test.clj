@@ -6,7 +6,7 @@
     [me.vedang.clj-fdb.core :as fc]
     [me.vedang.clj-fdb.internal.util :as u]
     [me.vedang.clj-fdb.range :as frange]
-    [me.vedang.clj-fdb.subspace.subspace :as fsubspace]
+    [me.vedang.clj-fdb.subspace.subspace :as fsub]
     [me.vedang.clj-fdb.transaction :as ftr]
     [me.vedang.clj-fdb.tuple.tuple :as ftup])
   (:import
@@ -18,7 +18,7 @@
 (use-fixtures :each u/test-fixture)
 
 
-(deftest test-get-set
+(deftest get-set-tests
   (testing "Test the best-case path for `fc/set` and `fc/get`"
     (let [k (ftup/from u/*test-prefix* "foo")
           v "1"
@@ -28,7 +28,7 @@
         (is (= v (fc/get db k bs/to-string)))))))
 
 
-(deftest test-get-non-existent-key
+(deftest get-non-existent-key-tests
   (testing "Test that `fc/get` on a non-existent key returns `nil`"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           k (ftup/from u/*test-prefix* "non-existent")]
@@ -36,7 +36,7 @@
         (is (nil? (fc/get db k identity)))))))
 
 
-(deftest test-clear-key
+(deftest clear-key-tests
   (testing "Test the best-case path for `fc/clear`"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           k (ftup/from u/*test-prefix* "foo")
@@ -48,7 +48,7 @@
         (is (nil? (fc/get db k identity)))))))
 
 
-(deftest test-get-range
+(deftest get-range-tests
   (testing "Test the best-case path for `fc/get-range`. End is exclusive."
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           input-keys ["bar" "car" "foo" "gum"]
@@ -71,7 +71,7 @@
                              bs/to-string)))))))
 
 
-(deftest test-clear-range
+(deftest clear-range-tests
   (testing "Test the best-case path for `fc/clear-range`. End is exclusive."
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           input-keys ["bar" "car" "foo" "gum"]
@@ -93,11 +93,11 @@
                          bs/to-string)))))))
 
 
-(deftest test-get-set-subspaced-key
+(deftest get-set-subspaced-key-tests
   (testing "Get/Set Subspaced Key using empty Tuple"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
-          prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
+          prefixed-subspace (fsub/create random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from) "value")
         (is (= "value"
@@ -109,7 +109,7 @@
   (testing "Get/Set Subspaced Key using non-empty Tuple"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
-          prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
+          prefixed-subspace (fsub/create random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from "a") "value")
         (= "value"
@@ -117,16 +117,16 @@
   (testing "Get non-existent Subspaced Key"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
-          prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
+          prefixed-subspace (fsub/create random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
         (is (nil? (fc/get db prefixed-subspace (ftup/from "a") bs/to-string)))))))
 
 
-(deftest test-clear-subspaced-key
+(deftest clear-subspaced-key-tests
   (testing "Clear subspaced key"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
-          prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)]
+          prefixed-subspace (fsub/create random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from) "value")
         (is (= "value" (fc/get db prefixed-subspace (ftup/from) bs/to-string)))
@@ -134,11 +134,11 @@
         (is (nil? (fc/get db prefixed-subspace (ftup/from) bs/to-string)))))))
 
 
-(deftest test-get-subspaced-range
+(deftest get-subspaced-range-tests
   (testing "Get subspaced range"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
-          prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)
+          prefixed-subspace (fsub/create random-prefixed-tuple)
           input-keys ["bar" "car" "foo" "gum"]
           v "10"
           expected-map {"bar" v "car" v "foo" v "gum" v}]
@@ -153,11 +153,11 @@
                              bs/to-string)))))))
 
 
-(deftest test-clear-subspaced-range
+(deftest clear-subspaced-range-tests
   (testing "Clear subspaced range completely"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
-          prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)
+          prefixed-subspace (fsub/create random-prefixed-tuple)
           input-keys ["bar" "car" "foo" "gum"]
           v "10"
           expected-map {"bar" v "car" v "foo" v "gum" v}]
@@ -176,7 +176,7 @@
   (testing "Clear subspaced range partially"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
-          prefixed-subspace (fsubspace/create-subspace random-prefixed-tuple)
+          prefixed-subspace (fsub/create random-prefixed-tuple)
           input-keys ["bar" ["bar" "bar"] ["bar" "baz"] "car" "foo" "gum"]
           v "10"
           expected-map {["bar"] v ["car"] v ["foo"] v ["gum"] v ["bar" "bar"] v ["bar" "baz"] v}
@@ -193,12 +193,12 @@
                (fc/get-range db
                              prefixed-subspace
                              (ftup/from)
-                             (comp ftup/get-items (partial fsubspace/unpack prefixed-subspace))
+                             (comp ftup/get-items (partial fsub/unpack prefixed-subspace))
                              bs/to-string)))
         (fc/clear-range db prefixed-subspace (ftup/from (first input-keys)))
         (is (= expected-map-2
                (fc/get-range db
                              prefixed-subspace
                              (ftup/from)
-                             (comp ftup/get-items (partial fsubspace/unpack prefixed-subspace))
+                             (comp ftup/get-items (partial fsub/unpack prefixed-subspace))
                              bs/to-string)))))))
