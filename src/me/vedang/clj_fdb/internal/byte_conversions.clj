@@ -21,8 +21,9 @@
      (throw (IllegalArgumentException.
              "I don't know how to convert input data to a byte-array"))))
   ([s k]
-   (condp instance? s
-     Subspace (fsub/pack s k)
-     ;; I will add Directory layer support here soon.
+   ;; DirectorySubspace also implements Subspace, so s can be either
+   ;; of the two.
+   (if (instance? Subspace s)
+     (fsub/pack s k)
      (throw (IllegalArgumentException.
              "I don't know how to convert input data to a byte-array")))))

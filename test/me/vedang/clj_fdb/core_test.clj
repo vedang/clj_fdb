@@ -1,19 +1,15 @@
 (ns me.vedang.clj-fdb.core-test
-  (:require
-    [byte-streams :as bs]
-    [clojure.test :refer [deftest is testing use-fixtures]]
-    [me.vedang.clj-fdb.FDB :as cfdb]
-    [me.vedang.clj-fdb.core :as fc]
-    [me.vedang.clj-fdb.internal.util :as u]
-    [me.vedang.clj-fdb.range :as frange]
-    [me.vedang.clj-fdb.subspace.subspace :as fsub]
-    [me.vedang.clj-fdb.transaction :as ftr]
-    [me.vedang.clj-fdb.tuple.tuple :as ftup])
-  (:import
-    (com.apple.foundationdb
-      Database
-      Transaction)))
-
+  (:require [byte-streams :as bs]
+            [clojure.test :refer [deftest is testing use-fixtures]]
+            [me.vedang.clj-fdb.core :as fc]
+            [me.vedang.clj-fdb.directory.directory :as fdir]
+            [me.vedang.clj-fdb.FDB :as cfdb]
+            [me.vedang.clj-fdb.internal.util :as u]
+            [me.vedang.clj-fdb.range :as frange]
+            [me.vedang.clj-fdb.subspace.subspace :as fsub]
+            [me.vedang.clj-fdb.transaction :as ftr]
+            [me.vedang.clj-fdb.tuple.tuple :as ftup])
+  (:import [com.apple.foundationdb Database Transaction]))
 
 (use-fixtures :each u/test-fixture)
 
@@ -112,8 +108,8 @@
           prefixed-subspace (fsub/create random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from "a") "value")
-        (= "value"
-           (fc/get db prefixed-subspace (ftup/from "a") bs/to-string)))))
+        (is (= "value"
+               (fc/get db prefixed-subspace (ftup/from "a") bs/to-string))))))
   (testing "Get non-existent Subspaced Key"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
@@ -202,3 +198,106 @@
                              (ftup/from)
                              (comp ftup/get-items (partial fsub/unpack prefixed-subspace))
                              bs/to-string)))))))
+
+
+(deftest get-set-directory-key-tests
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
+        random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]]
+    (testing "Get/Set Key inside a directory using empty Tuple"
+      (with-open [^Database db (cfdb/open fdb)]
+        (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
+          (fc/set db test-dir (ftup/from) "value")
+          (is (= "value" (fc/get db test-dir (ftup/from) bs/to-string)))
+          (fc/set db test-dir (ftup/from) "New value")
+          (is (= "New value" (fc/get db test-dir (ftup/from) bs/to-string))))))
+
+    (testing "Get/Set Key inside a directory using non-empty Tuple"
+      (with-open [^Database db (cfdb/open fdb)]
+        (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
+          (fc/set db test-dir (ftup/from "a") "value")
+          (is (= "value" (fc/get db test-dir (ftup/from "a") bs/to-string))))))
+
+    (testing "Get non-existent Key in directory"
+      (with-open [^Database db (cfdb/open fdb)]
+        (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
+          (is (nil? (fc/get db test-dir (ftup/from "aba") bs/to-string))))))))
+
+
+(deftest clear-directory-key-tests
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
+        random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]]
+    (testing "Clear a key that is nested in a directory"
+      (with-open [^Database db (cfdb/open fdb)]
+        (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
+          (fc/set db test-dir (ftup/from) "value")
+          (is (= "value" (fc/get db test-dir (ftup/from) bs/to-string)))
+          (fc/clear db test-dir (ftup/from))
+          (is (nil? (fc/get db test-dir (ftup/from) bs/to-string))))))))
+
+
+(deftest get-directory-range-tests
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
+        random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]
+        input-keys ["bar" "car" "foo" "gum"]
+        v "10"
+        expected-map {"bar" v "car" v "foo" v "gum" v}]
+    (testing "Get directory range of data"
+      (with-open [^Database db (cfdb/open fdb)]
+        (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
+          (doseq [k input-keys]
+            (fc/set db test-dir (ftup/from k) v))
+          (is (= expected-map
+                 (fc/get-range db
+                               test-dir
+                               (ftup/from)
+                               (comp last ftup/get-items ftup/from-bytes)
+                               bs/to-string))))))))
+
+
+(deftest clear-directory-range-tests
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
+        random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]
+        input-keys ["bar" "car" "foo" "gum"]
+        v "10"
+        expected-map {"bar" v "car" v "foo" v "gum" v}]
+    (testing "Clear keys under directory range completely"
+      (with-open [^Database db (cfdb/open fdb)]
+        (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
+          (doseq [k input-keys]
+            (fc/set db test-dir (ftup/from k) v))
+          (is (= expected-map
+                 (fc/get-range db
+                               test-dir
+                               (ftup/from)
+                               (comp last ftup/get-items ftup/from-bytes)
+                               bs/to-string)))
+          (fc/clear-range db test-dir)
+          (is (nil? (fc/get db test-dir (ftup/from) bs/to-string))))))
+
+    (testing "Clear subspaced range partially"
+      (let [input-keys ["bar" ["bar" "bar"] ["bar" "baz"] "car" "foo" "gum"]
+            v "10"
+            expected-map {["bar"] v ["car"] v ["foo"] v ["gum"] v ["bar" "bar"] v ["bar" "baz"] v}
+            expected-map-2 {["bar"] v ["car"] v ["foo"] v ["gum"] v}]
+        (with-open [^Database db (cfdb/open fdb)]
+          (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
+            (doseq [k input-keys]
+              (fc/set db
+                      test-dir
+                      (if (sequential? k)
+                        (apply ftup/from k)
+                        (ftup/from k))
+                      v))
+            (is (= expected-map
+                   (fc/get-range db
+                                 test-dir
+                                 (ftup/from)
+                                 (comp ftup/get-items (partial fsub/unpack test-dir))
+                                 bs/to-string)))
+            (fc/clear-range db test-dir (ftup/from (first input-keys)))
+            (is (= expected-map-2
+                   (fc/get-range db
+                                 test-dir
+                                 (ftup/from)
+                                 (comp ftup/get-items (partial fsub/unpack test-dir))
+                                 bs/to-string)))))))))

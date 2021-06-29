@@ -1,12 +1,9 @@
 (ns me.vedang.clj-fdb.internal.util
-  (:require
-    [me.vedang.clj-fdb.FDB :as cfdb]
-    [me.vedang.clj-fdb.core :as fc]
-    [me.vedang.clj-fdb.tuple.tuple :as ftup])
-  (:import
-    (com.apple.foundationdb
-      Database)))
-
+  (:require [me.vedang.clj-fdb.core :as fc]
+            [me.vedang.clj-fdb.directory.directory :as fdir]
+            [me.vedang.clj-fdb.FDB :as cfdb]
+            [me.vedang.clj-fdb.tuple.tuple :as ftup])
+  (:import com.apple.foundationdb.Database))
 
 (let [alphabet (vec "abcdefghijklmnopqrstuvwxyz0123456789")]
   (defn rand-str
@@ -27,6 +24,7 @@
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         rg (ftup/range (ftup/from prefix))]
     (with-open [^Database db (cfdb/open fdb)]
+      (fdir/remove! db [prefix])
       (fc/clear-range db rg))))
 
 
