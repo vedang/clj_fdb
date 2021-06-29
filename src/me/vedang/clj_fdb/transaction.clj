@@ -4,7 +4,7 @@
            [com.apple.foundationdb Range Transaction TransactionContext]
            com.apple.foundationdb.async.AsyncIterable
            java.util.concurrent.CompletableFuture
-           java.util.function.Function))
+           [java.util.function Function Supplier]))
 
 (defn- as-function
   "Takes a clojure fn and returns a `reify`'d version which implements
@@ -13,8 +13,17 @@
   Note: The fn should accept a single argument."
   [f]
   (reify Function
-    (apply [_this arg]
-      (f arg))))
+    (apply [_this arg] (f arg))))
+
+
+(defn- as-supplier
+  "Takes a clojure fn and returns a `reify`'d version which implements
+  `java.util.function.Supplier`.
+
+  Note: The fn should accept 0 arguments"
+  [f]
+  (reify Supplier
+    (get [_this] (f))))
 
 
 (defn run
@@ -25,6 +34,18 @@
   (.run tc (as-function tr-fn)))
 
 
+(defn ^CompletableFuture run-async!
+  "Takes a `TransactionContext` and a `fn`. Depending on the type of
+  context, this may execute the supplied function multiple times if an
+  error is encountered. This call is non-blocking -- control flow will
+  return immediately with a `CompletableFuture` that will be set when
+  the process is complete."
+  [^TransactionContext tc ^IFn tr-fn]
+  (.runAsync tc
+             (as-function
+              (fn [tr]
+                (. CompletableFuture
+                   (supplyAsync (as-supplier (fn [] (tr-fn tr)))))))))
 (defn set
   "Sets the value for a given key."
   [^Transaction tr ^"[B" k ^"[B" v]
