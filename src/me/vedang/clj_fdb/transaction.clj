@@ -1,5 +1,5 @@
 (ns me.vedang.clj-fdb.transaction
-  (:refer-clojure :exclude [get set])
+  (:refer-clojure :exclude [get set read])
   (:import clojure.lang.IFn
            [com.apple.foundationdb Range Transaction TransactionContext]
            com.apple.foundationdb.async.AsyncIterable
@@ -46,6 +46,32 @@
               (fn [tr]
                 (. CompletableFuture
                    (supplyAsync (as-supplier (fn [] (tr-fn tr)))))))))
+
+
+(defn read
+  "Takes a `TransactionContext` and runs a function `fn` in this context
+  that takes a read-only transaction. Depending on the type of
+  context, this may execute the supplied function multiple times if an
+  error is encountered. This method is blocking -- control will not
+  return from this call until work is complete."
+  [^TransactionContext tc ^IFn tr-fn]
+  (.read tc (as-function tr-fn)))
+
+
+(defn ^CompletableFuture read-async!
+  "Takes a `TransactionContext` and runs a function `fn` in this context
+  that takes a read-only transaction. Depending on the type of
+  context, this may execute the supplied function multiple times if an
+  error is encountered. This method is non-blocking -- control flow
+  returns immediately with a `CompletableFuture`."
+  [^TransactionContext tc ^IFn tr-fn]
+  (.readAsync tc
+              (as-function
+               (fn [tr]
+                 (. CompletableFuture
+                    (supplyAsync (as-supplier (fn [] (tr-fn tr)))))))))
+
+
 (defn set
   "Sets the value for a given key."
   [^Transaction tr ^"[B" k ^"[B" v]

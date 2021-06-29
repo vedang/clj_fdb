@@ -41,7 +41,7 @@
   is stored."
   ([^TransactionContext tc k parsefn]
    (let [k-ba (build-byte-array k)
-         v-ba (ftr/run tc (fn [^Transaction tr] (deref (ftr/get tr k-ba))))]
+         v-ba (ftr/read tc (fn [^Transaction tr] (deref (ftr/get tr k-ba))))]
      (when v-ba (parsefn v-ba))))
   ([^TransactionContext tc s k parsefn]
    (get tc (build-byte-array s k) parsefn)))
@@ -80,7 +80,7 @@
               Subspace (fsubspace/range r)
               (throw (IllegalArgumentException.
                       "r should be either of type Range or of type Subspace")))]
-     (ftr/run tc
+     (ftr/read tc
        (fn [^Transaction tr]
          (reduce (fn [acc ^KeyValue kv]
                    (assoc acc (keyfn (.getKey kv)) (valfn (.getValue kv))))
