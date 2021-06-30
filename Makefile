@@ -22,3 +22,11 @@ install:
 
 doc:
 	lein codox
+
+check:
+	@echo "\nRunning clj-kondo"
+	clj-kondo --lint .
+
+style:
+	@echo "\nRunning cljstyle"
+	cljstyle check .

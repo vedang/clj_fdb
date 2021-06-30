@@ -64,8 +64,8 @@
 (defn get-range
   "Takes the following:
   - TransactionContext `tc`
-  - Range of keys to fetch or a Subspace `r`
-  - IF `r` is a Subspace, can also accept `t`, a Tuple within that Subspace.
+  - Range of keys to fetch or a Subspace `r-or-s`
+  - IF `r-or-s` is a Subspace, can also accept `t`, a Tuple within that Subspace
   - `keyfn` and `valfn`, to transform the key/value to the correct format.
 
   and returns a map of key/value pairs.
@@ -74,23 +74,23 @@
   entire iterable. Use with care. If you want to get a lazy iterator,
   use the underlying get-range functions from `ftr` or `fsub`
   namespaces."
-  ([^TransactionContext tc r keyfn valfn]
-   (let [rg (condp instance? r
-              Range r
-              Subspace (fsub/range r)
+  ([^TransactionContext tc r-or-s keyfn valfn]
+   (let [rg (condp instance? r-or-s
+              Range r-or-s
+              Subspace (fsub/range r-or-s)
               (throw (IllegalArgumentException.
-                      "r should be either of type Range or of type Subspace")))]
+                      "r-or-s should be either of type Range or of type Subspace")))]
      (ftr/read tc
        (fn [^Transaction tr]
          (reduce (fn [acc ^KeyValue kv]
                    (assoc acc (keyfn (.getKey kv)) (valfn (.getValue kv))))
                  {}
                  (ftr/get-range tr rg))))))
-  ([^TransactionContext tc r t keyfn valfn]
-   (if (and (instance? Subspace r) (instance? Tuple t))
-     (get-range tc (fsub/range r t) keyfn valfn)
+  ([^TransactionContext tc s t keyfn valfn]
+   (if (and (instance? Subspace s) (instance? Tuple t))
+     (get-range tc (fsub/range s t) keyfn valfn)
      (throw (IllegalArgumentException.
-             "r should be of type Subspace and t should be of type Tuple")))))
+             "s should be of type Subspace and t should be of type Tuple")))))
 
 
 (defn clear-range
@@ -106,8 +106,8 @@
               (throw (IllegalArgumentException.
                       "r should be either of type Range or of type Subspace")))]
      (ftr/run tc (fn [^Transaction tr] (ftr/clear-range tr rg)))))
-  ([^TransactionContext tc r t]
-   (if (and (instance? Subspace r) (instance? Tuple t))
-     (clear-range tc (fsub/range r t))
+  ([^TransactionContext tc s t]
+   (if (and (instance? Subspace s) (instance? Tuple t))
+     (clear-range tc (fsub/range s t))
      (throw (IllegalArgumentException.
-             "r should be of type Subspace and t should be of type Tuple")))))
+             "s should be of type Subspace and t should be of type Tuple")))))
