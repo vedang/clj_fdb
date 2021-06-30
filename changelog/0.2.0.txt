@@ -1,0 +1,45 @@
+-*- mode: org; comment-column: 0; -*-
+
+* Version
+  - 0.2.0
+  - Release Date: <2021-06-30 Wed>
+
+* Changes
+- This release contains *significant breaking changes*
+  + The API has been simplified to only the following functions in
+    core (below). Also, key and value parsing is only available where
+    needed:
+    - ~get~
+    - ~set~
+    - ~clear~
+    - ~get-range~
+    - ~clear-range~
+  + The ~*-subspaced-*~ functions are no longer available, the
+    functionality is folded into the core API (listed above)
+  + ~byte-streams~ support has been removed from the library.
+    Serialization / De-serialization is supported for data-structures
+    that FDB provides (Tuple, Subspace, Directory). (You are of course
+    free to use ~byte-streams~ or any other serialization library in
+    the application code)
+- This library now depends on the latest java driver available.
+  (~6.3.13~)
+- Full Subspace and DirectoryLayer support is now available and baked
+  into the core API.
+- Should you need it, the full underlying Java API is available to
+  you.
+- The following functionality will be added in upcoming releases:
+  + Leveraging the power of Clojure for FDB async operations
+  + Full support for FDB watches
+  + Support for versionstamps
+- This library is still in the 0.x stage. I expect new releases to
+  have breakage in API until I get to the 1.0.0 release, post which
+  the API will be permanently supported.
+
+* Commit history
+
+- (#13, #14) Subspace and Directory support is available in core APIs
+- (#17) byte-streams has been removed as a library dependency
+- All examples have now been moved to the vedang/farstar repository
+- There are three new functions for executing transactions
+  + ~run-async!~ returns a future which will contain the result of the transaction
+  + ~read~ and ~read-async!~ support execution of read-only transactions in an efficient manner
