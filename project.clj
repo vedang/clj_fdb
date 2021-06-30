@@ -1,4 +1,4 @@
-(defproject me.vedang/clj-fdb "0.2.0"
+(defproject me.vedang/clj-fdb "0.3.0-SNAPSHOT"
   :description "A thin Clojure wrapper for the Java API for FoundationDB."
   :url "https://vedang.github.io/clj_fdb/"
   :license {:name "Eclipse Public License"
