@@ -1,7 +1,8 @@
 (ns me.vedang.clj-fdb.tuple.tuple
   (:refer-clojure :exclude [range])
   (:import com.apple.foundationdb.Range
-           com.apple.foundationdb.tuple.Tuple))
+           com.apple.foundationdb.tuple.Tuple
+           java.lang.Object))
 
 (defn from
   "Creates a new Tuple from a variable number of elements.
@@ -9,7 +10,9 @@
   Note: an empty number of arguments is a valid input to this
   function, it creates an empty Tuple."
   [& args]
-  (Tuple/from (into-array args)))
+  (try (Tuple/from (into-array args))
+       (catch IllegalArgumentException _
+         (Tuple/from (into-array Object args)))))
 
 
 (defn from-bytes
