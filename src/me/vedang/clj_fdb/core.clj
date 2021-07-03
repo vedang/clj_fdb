@@ -1,13 +1,40 @@
 (ns me.vedang.clj-fdb.core
   (:refer-clojure :exclude [get set])
-  (:require [me.vedang.clj-fdb.internal.byte-conversions
-             :refer [build-byte-array]]
-            [me.vedang.clj-fdb.subspace.subspace :as fsub]
-            [me.vedang.clj-fdb.transaction :as ftr])
+  (:require [me.vedang.clj-fdb.subspace.subspace :as fsub]
+            [me.vedang.clj-fdb.transaction :as ftr]
+            [me.vedang.clj-fdb.tuple.tuple :as ftup])
   (:import [com.apple.foundationdb KeyValue Range Transaction TransactionContext]
            com.apple.foundationdb.subspace.Subspace
            com.apple.foundationdb.tuple.Tuple
            java.lang.IllegalArgumentException))
+
+
+(def byte-array-class (class (byte-array 0)))
+
+
+(defn ^"[B" encode
+  "Takes input data and returns the byte-array representation of that data.
+  Supports strings, vectors, Tuples, Subspaces, Directories. For any
+  other type of key, please serialize to byte-array yourself."
+  ([k]
+   (cond
+     (instance? byte-array-class k) k
+     (instance? String k) (.getBytes ^String k "UTF-8")
+     (instance? Tuple k) (ftup/pack ^Tuple k)
+     (vector? k) (ftup/pack (apply ftup/from k))
+     :else (throw (IllegalArgumentException.
+                   "I don't know how to convert input data to a byte-array"))))
+  ([s k]
+   ;; DirectorySubspace also implements Subspace, so s can be either
+   ;; of the two.
+   (let [k' (cond
+              (vector? k) (apply ftup/from k)
+              :else k)]
+     (cond
+       (instance? Subspace s) (fsub/pack s k')
+       (vector? s) (fsub/pack (fsub/create (apply ftup/from s)) k')
+       :else (throw (IllegalArgumentException.
+                     "I don't know how to convert input data to a byte-array"))))))
 
 
 (defn set
@@ -15,18 +42,17 @@
   - TransactionContext `tc`
   - key to be stored `k` (should be byte-array, or convertible to byte-array)
   - value to be stored `v` (should be byte-array, or convertible to byte-array)
+  - `Subspace` `s` under which the key will be stored
+  - `opts` : unused at the moment, will support options like `:async?` in a later release.
 
-  and stores `v` against `k` in FDB. Returns nil.
-
-  Optionally, you can also pass a `Subspace` `s` under which the key
-  will be stored. "
+  Returns nil."
   ([^TransactionContext tc k v]
-   (let [k-ba (build-byte-array k)
-         v-ba (build-byte-array v)]
+   (let [k-ba (encode k)
+         v-ba (encode v)]
      (ftr/run tc (fn [^Transaction tr] (ftr/set tr k-ba v-ba)))))
   ([^TransactionContext tc s k v]
-   (let [k-ba (build-byte-array s k)
-         v-ba (build-byte-array v)]
+   (let [k-ba (encode s k)
+         v-ba (encode v)]
      (ftr/run tc (fn [^Transaction tr] (ftr/set tr k-ba v-ba))))))
 
 
@@ -40,11 +66,11 @@
   Optionally, you can also pass a `Subspace` `s`, under which the key
   is stored."
   ([^TransactionContext tc k parsefn]
-   (let [k-ba (build-byte-array k)
+   (let [k-ba (encode k)
          v-ba (ftr/read tc (fn [^Transaction tr] (deref (ftr/get tr k-ba))))]
      (when v-ba (parsefn v-ba))))
   ([^TransactionContext tc s k parsefn]
-   (get tc (build-byte-array s k) parsefn)))
+   (get tc (encode s k) parsefn)))
 
 
 (defn clear
@@ -54,10 +80,10 @@
 
   and clears the key from the db. Returns nil."
   ([^TransactionContext tc k]
-   (let [k-ba (build-byte-array k)]
+   (let [k-ba (encode k)]
      (ftr/run tc (fn [^Transaction tr] (ftr/clear-key tr k-ba)))))
   ([^TransactionContext tc s k]
-   (let [k-ba (build-byte-array s k)]
+   (let [k-ba (encode s k)]
      (ftr/run tc (fn [^Transaction tr] (ftr/clear-key tr k-ba))))))
 
 
@@ -75,11 +101,12 @@
   use the underlying get-range functions from `ftr` or `fsub`
   namespaces."
   ([^TransactionContext tc r-or-s keyfn valfn]
-   (let [rg (condp instance? r-or-s
-              Range r-or-s
-              Subspace (fsub/range r-or-s)
-              (throw (IllegalArgumentException.
-                      "r-or-s should be either of type Range or of type Subspace")))]
+   (let [rg (cond
+              (instance? Range r-or-s) r-or-s
+              (instance? Subspace r-or-s) (fsub/range r-or-s)
+              (vector? r-or-s) (ftup/range (apply ftup/from r-or-s))
+              :else (throw (IllegalArgumentException.
+                      "r-or-s should be either a vector or of type Range or of type Subspace")))]
      (ftr/read tc
        (fn [^Transaction tr]
          (reduce (fn [acc ^KeyValue kv]
@@ -87,10 +114,17 @@
                  {}
                  (ftr/get-range tr rg))))))
   ([^TransactionContext tc s t keyfn valfn]
-   (if (and (instance? Subspace s) (instance? Tuple t))
-     (get-range tc (fsub/range s t) keyfn valfn)
-     (throw (IllegalArgumentException.
-             "s should be of type Subspace and t should be of type Tuple")))))
+   (let [s' (cond
+              (vector? s) (fsub/create s)
+              (instance? Subspace s) s
+              :else (throw (IllegalArgumentException.
+                            "s should be of type Subspace")))
+         t' (cond
+              (vector? t) (apply ftup/from t)
+              (instance? Tuple t) t
+              :else (throw (IllegalArgumentException.
+                            "t should be of type Tuple")))]
+     (get-range tc (fsub/range s' t') keyfn valfn))))
 
 
 (defn clear-range

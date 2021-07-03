@@ -75,24 +75,24 @@ in the core ns:
   ;; Set a value in the DB.
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
-      (fc/set db (ftup/from "a" "test" "key") (ftup/from "some value"))))
+      (fc/set db ["a" "test" "key"] ["some value"])))
   ;; => nil
 
   ;; Read this value back in the DB.
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
-      (fc/get db (ftup/from "a" "test" "key") (comp ftup/get-items ftup/from-bytes))))
+      (fc/get db ["a" "test" "key"] (comp ftup/get-items ftup/from-bytes))))
   ;; => ["some value"]
 
   ;; FDB's Tuple Layer is super handy for efficient range reads. Each
   ;; element of the tuple can act as a prefix (from left to right).
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
-      (fc/set db (ftup/from "test" "keys" "A") (ftup/from "value A"))
-      (fc/set db (ftup/from "test" "keys" "B") (ftup/from "value B"))
-      (fc/set db (ftup/from "test" "keys" "C") (ftup/from "value C"))
+      (fc/set db ["test" "keys" "A"] ["value A"])
+      (fc/set db ["test" "keys" "B"] ["value B"])
+      (fc/set db ["test" "keys" "C"] ["value C"])
       (fc/get-range db
-                    (ftup/range (ftup/from "test" "keys"))
+                    ["test" "keys"]
                     (comp ftup/get-items ftup/from-bytes)
                     (comp ftup/get-items ftup/from-bytes))))
   ;; => {["test" "keys" "A"] ["value A"],
@@ -101,21 +101,21 @@ in the core ns:
 
   ;; FDB's Subspace Layer provides a neat way to logically namespace keys.
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-        subspace (fsub/create (ftup/from "test" "keys"))]
+        subspace (fsub/create ["test" "keys"])]
     (with-open [db (cfdb/open fdb)]
-      (fc/set db subspace (ftup/from "A") (ftup/from "Value A"))
-      (fc/set db subspace (ftup/from "B") (ftup/from "Value B"))
-      (fc/get db subspace (ftup/from "A") (comp ftup/get-items ftup/from-bytes))))
+      (fc/set db subspace ["A"] ["Value A"])
+      (fc/set db subspace ["B"] ["Value B"])
+      (fc/get db subspace ["A"] (comp ftup/get-items ftup/from-bytes))))
   ;; => ["Value A"]
 
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-        subspace (fsub/create (ftup/from "test" "keys"))]
+        subspace (fsub/create ["test" "keys"])]
     (with-open [db (cfdb/open fdb)]
-      (fc/set db subspace (ftup/from "A") (ftup/from "Value A"))
-      (fc/set db subspace (ftup/from "B") (ftup/from "Value B"))
+      (fc/set db subspace ["A"] ["Value A"])
+      (fc/set db subspace ["B"] ["Value B"])
       (fc/get-range db
                     subspace
-                    (ftup/from)
+                    []
                     (comp ftup/get-items ftup/from-bytes)
                     (comp first ftup/get-items ftup/from-bytes))))
   ;; => {["test" "keys" "A"] "Value A", ["test" "keys" "B"] "Value B"}
@@ -128,17 +128,10 @@ in the core ns:
     (with-open [db (cfdb/open fdb)]
       (ftr/run db
         (fn [tr]
-          (fc/set tr
-                  (ftup/from "test" "keys" "A")
-                  (ftup/from "value inside transaction A"))
-          (fc/set tr
-                  (ftup/from "test" "keys" "B")
-                  (ftup/from "value inside transaction B"))
-          (fc/set tr
-                  (ftup/from "test" "keys" "C")
-                  (ftup/from "value inside transaction C"))
-          (fc/get-range tr
-                        (ftup/range (ftup/from "test" "keys"))
+          (fc/set tr ["test" "keys" "A"] ["value inside transaction A"])
+          (fc/set tr ["test" "keys" "B"] ["value inside transaction B"])
+          (fc/set tr ["test" "keys" "C"] ["value inside transaction C"])
+          (fc/get-range tr ["test" "keys"]
                         (comp ftup/get-items ftup/from-bytes)
                         (comp first ftup/get-items ftup/from-bytes))))))
   ;; => {["test" "keys" "A"] "value inside transaction A",
@@ -150,23 +143,16 @@ in the core ns:
     (with-open [db (cfdb/open fdb)]
       (try (ftr/run db
              (fn [tr]
-               (fc/set tr
-                       (ftup/from "test" "keys" "A")
-                       (ftup/from "NEW value A"))
-               (fc/set tr
-                       (ftup/from "test" "keys" "B")
-                       (ftup/from "NEW value B"))
-               (fc/set tr
-                       (ftup/from "test" "keys" "C")
-                       (ftup/from "NEW value C"))
+               (fc/set tr ["test" "keys" "A"] ["NEW value A"])
+               (fc/set tr ["test" "keys" "B"] ["NEW value B"])
+               (fc/set tr ["test" "keys" "C"] ["NEW value C"])
                (throw (ex-info "I don't like completing transactions"
                                {:boo :hoo}))))
            (catch Exception _
              (fc/get-range db
-                           (ftup/range (ftup/from "test" "keys"))
+                           ["test" "keys"]
                            (comp ftup/get-items ftup/from-bytes)
                            (comp first ftup/get-items ftup/from-bytes))))))
-
   ;; => {["test" "keys" "A"] "value inside transaction A",
   ;;     ["test" "keys" "B"] "value inside transaction B",
   ;;     ["test" "keys" "C"] "value inside transaction C"}

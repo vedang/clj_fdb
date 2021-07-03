@@ -7,8 +7,12 @@
 
 (defn ^Subspace create
   "Constructor for a subspace formed with the specified prefix Tuple."
-  ([^Tuple prefix]
-   (Subspace. prefix))
+  ([prefix]
+   (cond
+     (vector? prefix) (Subspace. (apply ftup/from prefix))
+     (instance? Tuple prefix) (Subspace. prefix)
+     :else (throw (IllegalArgumentException.
+                   "Don't know how to create Subspace from input"))))
   ([] (Subspace.)))
 
 
