@@ -73,17 +73,22 @@
   "Takes the following:
   - TransactionContext `tc`
   - key to be fetched `k` (should be byte-array, or convertible to byte-array)
-  - Function `parsefn` taking the stored byte-array at `k` and
-  converting it to the appropriate return value `v`
+  - `Subspace` `s`, if you want to store the key under one.
 
-  Optionally, you can also pass a `Subspace` `s`, under which the key
-  is stored."
-  ([^TransactionContext tc k parsefn]
-   (let [k-ba (encode k)
+  The opts map supports the following arguments:
+  - Function `parsefn` for converting the return value from byte-array
+  to something else."
+  {:arglists '([tc k] [tc s k] [tc k opts] [tc s k opts])}
+  ([^TransactionContext tc k]
+   (get tc k {}))
+  ([^TransactionContext tc arg1 arg2]
+   (let [[s k opts] (if (map? arg2) [nil arg1 arg2] [arg1 arg2 {}])
+         parsefn (:parsefn opts decode)
+         k-ba (if s (encode s k) (encode k))
          v-ba (ftr/read tc (fn [^Transaction tr] (deref (ftr/get tr k-ba))))]
      (when v-ba (parsefn v-ba))))
-  ([^TransactionContext tc s k parsefn]
-   (get tc (encode s k) parsefn)))
+  ([^TransactionContext tc s k opts]
+   (get tc (encode s k) opts)))
 
 
 (defn clear

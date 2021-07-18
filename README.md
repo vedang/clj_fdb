@@ -81,7 +81,7 @@ in the core ns:
   ;; Read this value back in the DB.
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
-      (fc/get db ["a" "test" "key"] fc/decode)))
+      (fc/get db ["a" "test" "key"])))
   ;; => ["some value"]
 
   ;; FDB's Tuple Layer is super handy for efficient range reads. Each
@@ -102,7 +102,7 @@ in the core ns:
     (with-open [db (cfdb/open fdb)]
       (fc/set db subspace ["A"] ["Value A"])
       (fc/set db subspace ["B"] ["Value B"])
-      (fc/get db subspace ["A"] fc/decode)))
+      (fc/get db subspace ["A"])))
   ;; => ["Value A"]
 
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)

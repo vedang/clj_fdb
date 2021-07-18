@@ -22,7 +22,7 @@
           fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db k (bs/to-byte-array v))
-        (is (= v (fc/get db k bs/to-string)))))))
+        (is (= v (fc/get db k {:parsefn bs/to-string})))))))
 
 
 (deftest get-non-existent-key-tests
@@ -30,7 +30,7 @@
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           k (ftup/from u/*test-prefix* "non-existent")]
       (with-open [^Database db (cfdb/open fdb)]
-        (is (nil? (fc/get db k identity)))))))
+        (is (nil? (fc/get db k)))))))
 
 
 (deftest clear-key-tests
@@ -40,9 +40,9 @@
           v "1"]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db k (bs/to-byte-array v))
-        (is (= v (fc/get db k bs/to-string)))
+        (is (= v (fc/get db k {:parsefn bs/to-string})))
         (fc/clear db k)
-        (is (nil? (fc/get db k identity)))))))
+        (is (nil? (fc/get db k)))))))
 
 
 (deftest get-range-tests
@@ -85,9 +85,8 @@
                 (fc/set tr k (bs/to-byte-array v))))))
         (fc/clear-range db rg)
 
-        (is (= v (fc/get db
-                         (ftup/from u/*test-prefix* excluded-k)
-                         bs/to-string)))))))
+        (is (= v (fc/get db (ftup/from u/*test-prefix* excluded-k)
+                         {:parsefn bs/to-string})))))))
 
 
 (deftest get-set-subspaced-key-tests
@@ -98,10 +97,12 @@
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from) "value")
         (is (= "value"
-               (fc/get db prefixed-subspace (ftup/from) bs/to-string)))
+               (fc/get db prefixed-subspace (ftup/from)
+                       {:parsefn bs/to-string})))
         (fc/set db prefixed-subspace (ftup/from) "New value")
         (is (= "New value"
-               (fc/get db prefixed-subspace (ftup/from) bs/to-string))))))
+               (fc/get db prefixed-subspace (ftup/from)
+                       {:parsefn bs/to-string}))))))
 
   (testing "Get/Set Subspaced Key using non-empty Tuple"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
@@ -110,13 +111,14 @@
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from "a") "value")
         (is (= "value"
-               (fc/get db prefixed-subspace (ftup/from "a") bs/to-string))))))
+               (fc/get db prefixed-subspace (ftup/from "a")
+                       {:parsefn bs/to-string}))))))
   (testing "Get non-existent Subspaced Key"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
           prefixed-subspace (fsub/create random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
-        (is (nil? (fc/get db prefixed-subspace (ftup/from "a") bs/to-string)))))))
+        (is (nil? (fc/get db prefixed-subspace (ftup/from "a"))))))))
 
 
 (deftest clear-subspaced-key-tests
@@ -126,9 +128,10 @@
           prefixed-subspace (fsub/create random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from) "value")
-        (is (= "value" (fc/get db prefixed-subspace (ftup/from) bs/to-string)))
+        (is (= "value" (fc/get db prefixed-subspace (ftup/from)
+                               {:parsefn bs/to-string})))
         (fc/clear db prefixed-subspace (ftup/from))
-        (is (nil? (fc/get db prefixed-subspace (ftup/from) bs/to-string)))))))
+        (is (nil? (fc/get db prefixed-subspace (ftup/from))))))))
 
 
 (deftest get-subspaced-range-tests
@@ -168,7 +171,7 @@
                              (comp last ftup/get-items ftup/from-bytes)
                              bs/to-string)))
         (fc/clear-range db prefixed-subspace)
-        (is (nil? (fc/get db prefixed-subspace (ftup/from) bs/to-string))))))
+        (is (nil? (fc/get db prefixed-subspace (ftup/from)))))))
 
   (testing "Clear subspaced range partially"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
@@ -208,20 +211,23 @@
       (with-open [^Database db (cfdb/open fdb)]
         (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
           (fc/set db test-dir (ftup/from) "value")
-          (is (= "value" (fc/get db test-dir (ftup/from) bs/to-string)))
+          (is (= "value" (fc/get db test-dir (ftup/from)
+                                 {:parsefn bs/to-string})))
           (fc/set db test-dir (ftup/from) "New value")
-          (is (= "New value" (fc/get db test-dir (ftup/from) bs/to-string))))))
+          (is (= "New value" (fc/get db test-dir (ftup/from)
+                                     {:parsefn bs/to-string}))))))
 
     (testing "Get/Set Key inside a directory using non-empty Tuple"
       (with-open [^Database db (cfdb/open fdb)]
         (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
           (fc/set db test-dir (ftup/from "a") "value")
-          (is (= "value" (fc/get db test-dir (ftup/from "a") bs/to-string))))))
+          (is (= "value" (fc/get db test-dir (ftup/from "a")
+                                 {:parsefn bs/to-string}))))))
 
     (testing "Get non-existent Key in directory"
       (with-open [^Database db (cfdb/open fdb)]
         (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
-          (is (nil? (fc/get db test-dir (ftup/from "aba") bs/to-string))))))))
+          (is (nil? (fc/get db test-dir (ftup/from "aba")))))))))
 
 
 (deftest clear-directory-key-tests
@@ -231,9 +237,10 @@
       (with-open [^Database db (cfdb/open fdb)]
         (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
           (fc/set db test-dir (ftup/from) "value")
-          (is (= "value" (fc/get db test-dir (ftup/from) bs/to-string)))
+          (is (= "value" (fc/get db test-dir (ftup/from)
+                                 {:parsefn bs/to-string})))
           (fc/clear db test-dir (ftup/from))
-          (is (nil? (fc/get db test-dir (ftup/from) bs/to-string))))))))
+          (is (nil? (fc/get db test-dir (ftup/from)))))))))
 
 
 (deftest get-directory-range-tests
@@ -273,7 +280,7 @@
                                (comp last ftup/get-items ftup/from-bytes)
                                bs/to-string)))
           (fc/clear-range db test-dir)
-          (is (nil? (fc/get db test-dir (ftup/from) bs/to-string))))))
+          (is (nil? (fc/get db test-dir (ftup/from)))))))
 
     (testing "Clear subspaced range partially"
       (let [input-keys ["bar" ["bar" "bar"] ["bar" "baz"] "car" "foo" "gum"]
@@ -312,23 +319,18 @@
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db random-prefixed-path [])
         (is (= []
-               (fc/get db (apply ftup/from random-prefixed-path)
-                       (comp ftup/get-items ftup/from-bytes))
-               (fc/get db random-prefixed-path
-                       (comp ftup/get-items ftup/from-bytes))))))
+               (fc/get db (apply ftup/from random-prefixed-path))
+               (fc/get db random-prefixed-path)))))
     (testing "Get/Setting keys with vectors as Subspaces + Tuples"
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db random-prefixed-path random-key [])
         (is (= []
                (fc/get db (fsub/pack (fsub/create (apply ftup/from random-prefixed-path))
-                                     (apply ftup/from random-key))
-                       (comp ftup/get-items ftup/from-bytes))
-               (fc/get db random-prefixed-path random-key
-                       (comp ftup/get-items ftup/from-bytes))
-               (fc/get db random-spc random-key
-                       (comp ftup/get-items ftup/from-bytes))
-               (fc/get db random-prefixed-path (apply ftup/from random-key)
-                       (comp ftup/get-items ftup/from-bytes))))))))
+                                     (apply ftup/from random-key)))
+               (fc/get db random-prefixed-path random-key)
+               (fc/get db random-spc random-key)
+               (fc/get db random-prefixed-path
+                       (apply ftup/from random-key))))))))
 
 
 (deftest encode-decode-tests
