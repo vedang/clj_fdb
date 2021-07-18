@@ -1,5 +1,5 @@
 (ns me.vedang.clj-fdb.core
-  (:refer-clojure :exclude [get set])
+  (:refer-clojure :exclude [get set range])
   (:require [me.vedang.clj-fdb.subspace.subspace :as fsub]
             [me.vedang.clj-fdb.transaction :as ftr]
             [me.vedang.clj-fdb.tuple.tuple :as ftup])
@@ -104,6 +104,32 @@
    (let [k-ba (encode s k)]
      (ftr/run tc (fn [^Transaction tr] (ftr/clear-key tr k-ba))))))
 
+(defn range
+  "Return a range according to the input arguments.
+
+  At the moment, this should be considered as a helper function for
+  `get-range` and `clear-range`. You should ideally never need to use
+  it directly, even though it is in the core namespace."
+  ([arg1]
+   (cond
+     (instance? Range arg1) arg1
+     (instance? Subspace arg1) (fsub/range arg1)
+     (vector? arg1) (ftup/range (ftup/create arg1))
+     :else (throw (IllegalArgumentException.
+                   "Arg should be either a vector or of type Range or of type Subspace"))))
+  ([arg1 arg2]
+   (let [s (cond
+             (vector? arg1) (fsub/create arg1)
+             (instance? Subspace arg1) arg1
+             :else (throw (IllegalArgumentException.
+                           "Arg1 should be of type Subspace")))
+         t (cond
+             (vector? arg2) (ftup/create arg2)
+             (instance? Tuple arg2) arg2
+             :else (throw (IllegalArgumentException.
+                           "Arg2 should be of type Tuple")))]
+     (fsub/range s t))))
+
 
 (defn get-range
   "Takes the following:
@@ -118,31 +144,27 @@
   entire iterable. Use with care. If you want to get a lazy iterator,
   use the underlying get-range functions from `ftr` or `fsub`
   namespaces."
-  ([^TransactionContext tc r-or-s keyfn valfn]
-   (let [rg (cond
-              (instance? Range r-or-s) r-or-s
-              (instance? Subspace r-or-s) (fsub/range r-or-s)
-              (vector? r-or-s) (ftup/range (ftup/create r-or-s))
-              :else (throw (IllegalArgumentException.
-                      "r-or-s should be either a vector or of type Range or of type Subspace")))]
+  {:arglists '([tc rnge] [tc subspace] [tc k opts] [tc s k] [tc s k opts])}
+  ([^TransactionContext tc arg1]
+   (get-range tc arg1 {}))
+  ([^TransactionContext tc arg1 arg2]
+   (let [[s k opts] (if (map? arg2) [nil arg1 arg2] [arg1 arg2 {}])]
+     (get-range tc s k opts)))
+  ([^TransactionContext tc s k opts]
+   (let [rg (if s (range s k) (range k))
+         keyfn (:keyfn opts
+                       (if (or s (instance? Subspace k))
+                         (partial decode (or s k))
+                         decode))
+         valfn (:valfn opts decode)]
      (ftr/read tc
-       (fn [^Transaction tr]
-         (reduce (fn [acc ^KeyValue kv]
-                   (assoc acc (keyfn (.getKey kv)) (valfn (.getValue kv))))
-                 {}
-                 (ftr/get-range tr rg))))))
-  ([^TransactionContext tc s t keyfn valfn]
-   (let [s' (cond
-              (vector? s) (fsub/create s)
-              (instance? Subspace s) s
-              :else (throw (IllegalArgumentException.
-                            "s should be of type Subspace")))
-         t' (cond
-              (vector? t) (ftup/create t)
-              (instance? Tuple t) t
-              :else (throw (IllegalArgumentException.
-                            "t should be of type Tuple")))]
-     (get-range tc (fsub/range s' t') keyfn valfn))))
+               (fn [^Transaction tr]
+                 (reduce (fn [acc ^KeyValue kv]
+                           (assoc acc
+                                  (keyfn (.getKey kv))
+                                  (valfn (.getValue kv))))
+                         {}
+                         (ftr/get-range tr rg)))))))
 
 
 (defn clear-range

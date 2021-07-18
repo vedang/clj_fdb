@@ -32,20 +32,18 @@
              (fc/get-range db
                            (frange/range (ftup/pack (ftup/from u/*test-prefix* "bar"))
                                          (ftup/pack (ftup/from u/*test-prefix* "baz")))
-                           (comp second ftup/get-items ftup/from-bytes)
-                           bs/to-string)))
+                           {:keyfn (comp second fc/decode)
+                            :valfn bs/to-string})))
       (is (= expected-map-2
              (fc/get-range db
                            (frange/range (ftup/pack (ftup/from u/*test-prefix* "a"))
                                          (ftup/pack (ftup/from u/*test-prefix* "z")))
-                           (comp second ftup/get-items ftup/from-bytes)
-                           bs/to-string)))
+                           {:keyfn (comp second fc/decode)
+                            :valfn bs/to-string})))
       (is (= {}
              (fc/get-range db
                            (frange/range (ftup/pack (ftup/from u/*test-prefix* "c"))
-                                         (ftup/pack (ftup/from u/*test-prefix* "z")))
-                           (comp second ftup/get-items ftup/from-bytes)
-                           bs/to-string))))))
+                                         (ftup/pack (ftup/from u/*test-prefix* "z")))))))))
 
 
 (deftest range-starts-with-tests
@@ -69,28 +67,20 @@
                                (ftup/from "bar")
                                ftup/pack
                                frange/starts-with)
-                           (comp (partial drop 1)
-                                 ftup/get-items
-                                 ftup/from-bytes)
-                           bs/to-string)))
+                           {:keyfn (comp (partial drop 1) fc/decode)
+                            :valfn bs/to-string})))
       ;; startswith in tuples requires exact match
       (is (= {}
              (fc/get-range db
                            (-> u/*test-prefix*
                                (ftup/from "bb")
                                ftup/pack
-                               frange/starts-with)
-                           (comp (partial drop 1)
-                                 ftup/get-items
-                                 ftup/from-bytes)
-                           bs/to-string)))
+                               frange/starts-with))))
       (is (= expected-map-2
              (fc/get-range db
                            (-> u/*test-prefix*
                                (ftup/from "bbz")
                                ftup/pack
                                frange/starts-with)
-                           (comp (partial drop 1)
-                                 ftup/get-items
-                                 ftup/from-bytes)
-                           bs/to-string))))))
+                           {:keyfn (comp (partial drop 1) fc/decode)
+                            :valfn bs/to-string}))))))

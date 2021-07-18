@@ -64,8 +64,8 @@
         (is (= expected-map
                (fc/get-range db
                              rg
-                             (comp second ftup/get-items ftup/from-bytes)
-                             bs/to-string)))))))
+                             {:keyfn (comp second fc/decode)
+                              :valfn bs/to-string})))))))
 
 
 (deftest clear-range-tests
@@ -149,8 +149,8 @@
                (fc/get-range db
                              prefixed-subspace
                              (ftup/from)
-                             (comp last ftup/get-items ftup/from-bytes)
-                             bs/to-string)))))))
+                             {:keyfn (comp last fc/decode)
+                              :valfn bs/to-string})))))))
 
 
 (deftest clear-subspaced-range-tests
@@ -168,8 +168,8 @@
                (fc/get-range db
                              prefixed-subspace
                              (ftup/from)
-                             (comp last ftup/get-items ftup/from-bytes)
-                             bs/to-string)))
+                             {:keyfn (comp last fc/decode)
+                              :valfn bs/to-string})))
         (fc/clear-range db prefixed-subspace)
         (is (nil? (fc/get db prefixed-subspace (ftup/from)))))))
 
@@ -193,15 +193,13 @@
                (fc/get-range db
                              prefixed-subspace
                              (ftup/from)
-                             (comp ftup/get-items (partial fsub/unpack prefixed-subspace))
-                             bs/to-string)))
+                             {:valfn bs/to-string})))
         (fc/clear-range db prefixed-subspace (ftup/from (first input-keys)))
         (is (= expected-map-2
                (fc/get-range db
                              prefixed-subspace
                              (ftup/from)
-                             (comp ftup/get-items (partial fsub/unpack prefixed-subspace))
-                             bs/to-string)))))))
+                             {:valfn bs/to-string})))))))
 
 
 (deftest get-set-directory-key-tests
@@ -247,19 +245,14 @@
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]
         input-keys ["bar" "car" "foo" "gum"]
-        v "10"
-        expected-map {"bar" v "car" v "foo" v "gum" v}]
+        v ["10"]
+        expected-map {["bar"] v ["car"] v ["foo"] v ["gum"] v}]
     (testing "Get directory range of data"
       (with-open [^Database db (cfdb/open fdb)]
         (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
           (doseq [k input-keys]
             (fc/set db test-dir (ftup/from k) v))
-          (is (= expected-map
-                 (fc/get-range db
-                               test-dir
-                               (ftup/from)
-                               (comp last ftup/get-items ftup/from-bytes)
-                               bs/to-string))))))))
+          (is (= expected-map (fc/get-range db test-dir))))))))
 
 
 (deftest clear-directory-range-tests
@@ -277,8 +270,8 @@
                  (fc/get-range db
                                test-dir
                                (ftup/from)
-                               (comp last ftup/get-items ftup/from-bytes)
-                               bs/to-string)))
+                               {:keyfn (comp last fc/decode)
+                                :valfn bs/to-string})))
           (fc/clear-range db test-dir)
           (is (nil? (fc/get db test-dir (ftup/from)))))))
 
@@ -300,15 +293,13 @@
                    (fc/get-range db
                                  test-dir
                                  (ftup/from)
-                                 (comp ftup/get-items (partial fsub/unpack test-dir))
-                                 bs/to-string)))
+                                 {:valfn bs/to-string})))
             (fc/clear-range db test-dir (ftup/from (first input-keys)))
             (is (= expected-map-2
                    (fc/get-range db
                                  test-dir
                                  (ftup/from)
-                                 (comp ftup/get-items (partial fsub/unpack test-dir))
-                                 bs/to-string)))))))))
+                                 {:valfn bs/to-string})))))))))
 
 (deftest vector-as-input-tests
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
