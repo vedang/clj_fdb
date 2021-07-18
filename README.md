@@ -19,13 +19,22 @@ At the moment, this ns provides the following functions:
     - get-range
     - clear-range
 
-
 FDB only stores data as bytes. When using this library, you are
 expected to pass in data (both keys as well as values) as either:
 - Byte Arrays
 - Strings (converted to byte-arrays internally with a UTF-8 encoding)
 - FDB data-structures (Tuples, Subspaces, DirectoryLayers, converted
   to byte-arrays internally using functions provided by FDB)
+
+The library transparently converts Tuples, Subspaces and
+DirectoryLayers into byte-arrays (and back) so my recommendation is
+that you always use these for keys in FDB, and where possible use
+Tuples to wrap the values you want to store in FDB. If you build your
+keys and values using Clojure's `vector` function, your data will be
+handled automatically. Note that if you use non-Tuple data as values,
+the library will return the byte-array as-is to you. You need to
+either pass in a `:valfn` to convert the byte-array to data or you
+need to handle the conversion yourself. Refer to the examples below.
 
 The idea is to write a really thin "clojure-y" wrapper on top of the
 Java API. The `core.clj` file provides wrapped functions that make
@@ -41,21 +50,21 @@ underlying Java driver. So the style is as follows:
 ... and so on. The complete Java API is not available at the moment,
 and will be built out as per my requirements (or via PRs, please).
 Currently, the core namespace provides sync functions for working with
-to Raw KV, Tuples and Subspaces.
+to Raw KV, Tuples, Subspaces and Directories.
 
 Going through `transaction.clj` or `tuple.clj` or `FDB.clj` will give
 you a clear idea of what I have in mind, please help me by
 contributing PRs!
 
 The complete documentation is available at:
-https://cljdoc.org/d/me.vedang/clj-fdb/0.2.0
+https://cljdoc.org/d/me.vedang/clj-fdb/0.3.0
 
 ## Installation
 
 * Use the library in your Clojure projects by adding the dep in
   `project.clj`
 ```
-[me.vedang/clj-fdb "0.2.0"]
+[me.vedang/clj-fdb "0.3.0"]
 ```
 
 ## Examples
@@ -64,7 +73,7 @@ Here is some test code to demonstrate how to use the functions defined
 in the core ns:
 ```clojure
 ;; To run this code, you will need to require the following in your project:
-;; [me.vedang/clj-fdb "0.2.0"]
+;; [me.vedang/clj-fdb "0.3.0"]
 (comment
   (require '[me.vedang.clj-fdb.FDB :as cfdb]
            '[me.vedang.clj-fdb.core :as fc]
