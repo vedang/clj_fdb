@@ -19,9 +19,16 @@
 
 
 (deftest tuple-tests
-  (is (= [] (ftup/get-items (ftup/from))))
-  (is (= [42] (ftup/get-items (ftup/from 42))))
-  (is (= [42 43 44] (ftup/get-items (.add (.add (.add (ftup/from) 42) 43) 44))))
+  (is (= []
+         (ftup/get-items (ftup/create []))
+         (ftup/get-items (ftup/create nil))
+         (ftup/get-items (ftup/from))))
+  (is (= [42]
+         (ftup/get-items (ftup/from 42))
+         (ftup/get-items (ftup/create [42]))))
+  (is (= [42 43 44]
+         (ftup/get-items (.add (.add (.add (ftup/from) 42) 43) 44))
+         (ftup/get-items (ftup/create [42 43 44]))))
 
   (is (= [] (ftup/get-items (ftup/from-bytes (ftup/pack (ftup/from))))))
   (is (= [42] (ftup/get-items (ftup/from-bytes (ftup/pack (ftup/from 42))))))

@@ -4,15 +4,24 @@
            com.apple.foundationdb.tuple.Tuple
            java.lang.Object))
 
+(defn ^Tuple create
+  "A wrapper over `from`, to keep the API consistent across Subspace and
+  Directory layers."
+  [v]
+  (try (Tuple/from (into-array (type (first v)) v))
+       (catch IllegalArgumentException _
+         (Tuple/from (into-array Object v)))
+       (catch NullPointerException _
+         (Tuple/from (into-array Object v)))))
+
+
 (defn from
   "Creates a new Tuple from a variable number of elements.
 
   Note: an empty number of arguments is a valid input to this
   function, it creates an empty Tuple."
   [& args]
-  (try (Tuple/from (into-array args))
-       (catch IllegalArgumentException _
-         (Tuple/from (into-array Object args)))))
+  (create args))
 
 
 (defn from-bytes

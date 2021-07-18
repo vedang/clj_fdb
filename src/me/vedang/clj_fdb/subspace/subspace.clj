@@ -9,7 +9,7 @@
   "Constructor for a subspace formed with the specified prefix Tuple."
   ([prefix]
    (cond
-     (vector? prefix) (Subspace. (apply ftup/from prefix))
+     (vector? prefix) (Subspace. (ftup/create prefix))
      (instance? Tuple prefix) (Subspace. prefix)
      :else (throw (IllegalArgumentException.
                    "Don't know how to create Subspace from input"))))
@@ -42,9 +42,10 @@
   ([^Subspace s]
    (.pack s))
   ([^Subspace s t]
-   (condp instance? t
-     Tuple (.pack s ^Tuple t)
-     (.pack s ^Tuple (ftup/from t)))))
+   (cond
+     (instance? Tuple t) (.pack s ^Tuple t)
+     (vector? t) (.pack s ^Tuple (ftup/create t))
+     :else (.pack s ^Tuple (ftup/from t)))))
 
 
 (defn ^Tuple unpack

@@ -21,18 +21,16 @@
      (instance? byte-array-class k) k
      (instance? String k) (.getBytes ^String k "UTF-8")
      (instance? Tuple k) (ftup/pack ^Tuple k)
-     (vector? k) (ftup/pack (apply ftup/from k))
+     (vector? k) (ftup/pack (ftup/create k))
      :else (throw (IllegalArgumentException.
                    "I don't know how to convert input data to a byte-array"))))
   ([s k]
    ;; DirectorySubspace also implements Subspace, so s can be either
    ;; of the two.
-   (let [k' (cond
-              (vector? k) (apply ftup/from k)
-              :else k)]
+   (let [k' (if (vector? k) (ftup/create k) k)]
      (cond
        (instance? Subspace s) (fsub/pack s k')
-       (vector? s) (fsub/pack (fsub/create (apply ftup/from s)) k')
+       (vector? s) (fsub/pack (fsub/create s) k')
        :else (throw (IllegalArgumentException.
                      "I don't know how to convert input data to a byte-array"))))))
 
@@ -104,7 +102,7 @@
    (let [rg (cond
               (instance? Range r-or-s) r-or-s
               (instance? Subspace r-or-s) (fsub/range r-or-s)
-              (vector? r-or-s) (ftup/range (apply ftup/from r-or-s))
+              (vector? r-or-s) (ftup/range (ftup/create r-or-s))
               :else (throw (IllegalArgumentException.
                       "r-or-s should be either a vector or of type Range or of type Subspace")))]
      (ftr/read tc
@@ -120,7 +118,7 @@
               :else (throw (IllegalArgumentException.
                             "s should be of type Subspace")))
          t' (cond
-              (vector? t) (apply ftup/from t)
+              (vector? t) (ftup/create t)
               (instance? Tuple t) t
               :else (throw (IllegalArgumentException.
                             "t should be of type Tuple")))]
