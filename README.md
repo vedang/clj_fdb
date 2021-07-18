@@ -81,7 +81,7 @@ in the core ns:
   ;; Read this value back in the DB.
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
     (with-open [db (cfdb/open fdb)]
-      (fc/get db ["a" "test" "key"] (comp ftup/get-items ftup/from-bytes))))
+      (fc/get db ["a" "test" "key"] fc/decode)))
   ;; => ["some value"]
 
   ;; FDB's Tuple Layer is super handy for efficient range reads. Each
@@ -91,10 +91,7 @@ in the core ns:
       (fc/set db ["test" "keys" "A"] ["value A"])
       (fc/set db ["test" "keys" "B"] ["value B"])
       (fc/set db ["test" "keys" "C"] ["value C"])
-      (fc/get-range db
-                    ["test" "keys"]
-                    (comp ftup/get-items ftup/from-bytes)
-                    (comp ftup/get-items ftup/from-bytes))))
+      (fc/get-range db ["test" "keys"] fc/decode fc/decode)))
   ;; => {["test" "keys" "A"] ["value A"],
   ;;     ["test" "keys" "B"] ["value B"],
   ;;     ["test" "keys" "C"] ["value C"]}
@@ -105,7 +102,7 @@ in the core ns:
     (with-open [db (cfdb/open fdb)]
       (fc/set db subspace ["A"] ["Value A"])
       (fc/set db subspace ["B"] ["Value B"])
-      (fc/get db subspace ["A"] (comp ftup/get-items ftup/from-bytes))))
+      (fc/get db subspace ["A"] fc/decode)))
   ;; => ["Value A"]
 
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
@@ -113,12 +110,20 @@ in the core ns:
     (with-open [db (cfdb/open fdb)]
       (fc/set db subspace ["A"] ["Value A"])
       (fc/set db subspace ["B"] ["Value B"])
-      (fc/get-range db
-                    subspace
-                    []
-                    (comp ftup/get-items ftup/from-bytes)
-                    (comp first ftup/get-items ftup/from-bytes))))
+      (fc/get-range db subspace []
+                    fc/decode
+                    (comp first fc/decode))))
   ;; => {["test" "keys" "A"] "Value A", ["test" "keys" "B"] "Value B"}
+
+  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
+        subspace (fsub/create ["test" "keys"])]
+    (with-open [db (cfdb/open fdb)]
+      (fc/set db subspace ["A"] ["Value A"])
+      (fc/set db subspace ["B"] ["Value B"])
+      (fc/get-range db subspace []
+                    (partial fc/decode subspace)
+                    (comp first fc/decode))))
+  ;; => {["A"] "Value A", ["B"] "Value B", ["C"] "value C"}
 
   ;; FDB's functions are beautifully composable. So you needn't
   ;; execute each step of the above function in independent
@@ -132,8 +137,8 @@ in the core ns:
           (fc/set tr ["test" "keys" "B"] ["value inside transaction B"])
           (fc/set tr ["test" "keys" "C"] ["value inside transaction C"])
           (fc/get-range tr ["test" "keys"]
-                        (comp ftup/get-items ftup/from-bytes)
-                        (comp first ftup/get-items ftup/from-bytes))))))
+                        fc/decode
+                        (comp first fc/decode))))))
   ;; => {["test" "keys" "A"] "value inside transaction A",
   ;;     ["test" "keys" "B"] "value inside transaction B",
   ;;     ["test" "keys" "C"] "value inside transaction C"}
@@ -151,8 +156,8 @@ in the core ns:
            (catch Exception _
              (fc/get-range db
                            ["test" "keys"]
-                           (comp ftup/get-items ftup/from-bytes)
-                           (comp first ftup/get-items ftup/from-bytes))))))
+                           fc/decode
+                           (comp first fc/decode))))))
   ;; => {["test" "keys" "A"] "value inside transaction A",
   ;;     ["test" "keys" "B"] "value inside transaction B",
   ;;     ["test" "keys" "C"] "value inside transaction C"}

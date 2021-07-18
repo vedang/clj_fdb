@@ -35,6 +35,21 @@
                      "I don't know how to convert input data to a byte-array"))))))
 
 
+(defn decode
+  "Takes a packed Tuple and returns the contents of the Tuple."
+  ([^"[B" code]
+   (try (when code (ftup/get-items (ftup/from-bytes code)))
+        ;; I don't know how to convert this back, will let caller deal
+        ;; with it.
+        (catch IllegalArgumentException _ code)))
+  ([s code]
+   (cond
+     (instance? Subspace s) (ftup/get-items (fsub/unpack s code))
+     (vector? s) (ftup/get-items (fsub/unpack (fsub/create s) code))
+     ;; I don't know how to convert this back, will let caller deal
+     ;; with it.
+     :else code)))
+
 (defn set
   "Takes the following:
   - TransactionContext `tc`

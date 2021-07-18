@@ -9,7 +9,8 @@
             [me.vedang.clj-fdb.subspace.subspace :as fsub]
             [me.vedang.clj-fdb.transaction :as ftr]
             [me.vedang.clj-fdb.tuple.tuple :as ftup])
-  (:import [com.apple.foundationdb Database Transaction]))
+  (:import [com.apple.foundationdb Database Transaction]
+           java.util.UUID))
 
 (use-fixtures :each u/test-fixture)
 
@@ -302,7 +303,7 @@
                                  (comp ftup/get-items (partial fsub/unpack test-dir))
                                  bs/to-string)))))))))
 
-(deftest vector-tests
+(deftest vector-as-input-tests
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         random-prefixed-path [u/*test-prefix* (u/rand-str 5)]
         random-key ["random-key"]
@@ -328,3 +329,21 @@
                        (comp ftup/get-items ftup/from-bytes))
                (fc/get db random-prefixed-path (apply ftup/from random-key)
                        (comp ftup/get-items ftup/from-bytes))))))))
+
+
+(deftest encode-decode-tests
+  (is (= [42 43 44] (-> [42 43 44] fc/encode fc/decode)))
+  (is (= [] (-> [] fc/encode fc/decode)))
+
+  (let [id (UUID/randomUUID)]
+    (is (= [id] (-> [id] fc/encode fc/decode))))
+
+  (is (= ["test-subspace" 1 2 3]
+         (->> [1 2 3] (fc/encode ["test-subspace"]) fc/decode)))
+  (is (= [1 2 3]
+         (->> [1 2 3]
+             (fc/encode ["test-subspace"])
+             (fc/decode ["test-subspace"]))
+         (->> [1 2 3]
+              (fc/encode ["test-subspace"])
+              (fc/decode (fsub/create ["test-subspace"]))))))
