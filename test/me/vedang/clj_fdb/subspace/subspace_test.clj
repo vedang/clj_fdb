@@ -15,7 +15,7 @@
         k-ba (fsub/pack prefix-subspace (ftup/from "test-key"))]
     (with-open [^Database db (cfdb/open fdb)]
       (fc/set db k-ba "subspace value")
-      (is (= "subspace value" (fc/get db k-ba {:parsefn bs/to-string}))))))
+      (is (= "subspace value" (fc/get db k-ba {:valfn bs/to-string}))))))
 
 
 (deftest subspace-tests

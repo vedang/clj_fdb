@@ -22,7 +22,7 @@
           fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db k (bs/to-byte-array v))
-        (is (= v (fc/get db k {:parsefn bs/to-string})))))))
+        (is (= v (fc/get db k {:valfn bs/to-string})))))))
 
 
 (deftest get-non-existent-key-tests
@@ -40,7 +40,7 @@
           v "1"]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db k (bs/to-byte-array v))
-        (is (= v (fc/get db k {:parsefn bs/to-string})))
+        (is (= v (fc/get db k {:valfn bs/to-string})))
         (fc/clear db k)
         (is (nil? (fc/get db k)))))))
 
@@ -86,7 +86,7 @@
         (fc/clear-range db rg)
 
         (is (= v (fc/get db (ftup/from u/*test-prefix* excluded-k)
-                         {:parsefn bs/to-string})))))))
+                         {:valfn bs/to-string})))))))
 
 
 (deftest get-set-subspaced-key-tests
@@ -98,11 +98,11 @@
         (fc/set db prefixed-subspace (ftup/from) "value")
         (is (= "value"
                (fc/get db prefixed-subspace (ftup/from)
-                       {:parsefn bs/to-string})))
+                       {:valfn bs/to-string})))
         (fc/set db prefixed-subspace (ftup/from) "New value")
         (is (= "New value"
                (fc/get db prefixed-subspace (ftup/from)
-                       {:parsefn bs/to-string}))))))
+                       {:valfn bs/to-string}))))))
 
   (testing "Get/Set Subspaced Key using non-empty Tuple"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
@@ -112,7 +112,7 @@
         (fc/set db prefixed-subspace (ftup/from "a") "value")
         (is (= "value"
                (fc/get db prefixed-subspace (ftup/from "a")
-                       {:parsefn bs/to-string}))))))
+                       {:valfn bs/to-string}))))))
   (testing "Get non-existent Subspaced Key"
     (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
           random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
@@ -129,7 +129,7 @@
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from) "value")
         (is (= "value" (fc/get db prefixed-subspace (ftup/from)
-                               {:parsefn bs/to-string})))
+                               {:valfn bs/to-string})))
         (fc/clear db prefixed-subspace (ftup/from))
         (is (nil? (fc/get db prefixed-subspace (ftup/from))))))))
 
@@ -210,17 +210,17 @@
         (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
           (fc/set db test-dir (ftup/from) "value")
           (is (= "value" (fc/get db test-dir (ftup/from)
-                                 {:parsefn bs/to-string})))
+                                 {:valfn bs/to-string})))
           (fc/set db test-dir (ftup/from) "New value")
           (is (= "New value" (fc/get db test-dir (ftup/from)
-                                     {:parsefn bs/to-string}))))))
+                                     {:valfn bs/to-string}))))))
 
     (testing "Get/Set Key inside a directory using non-empty Tuple"
       (with-open [^Database db (cfdb/open fdb)]
         (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
           (fc/set db test-dir (ftup/from "a") "value")
           (is (= "value" (fc/get db test-dir (ftup/from "a")
-                                 {:parsefn bs/to-string}))))))
+                                 {:valfn bs/to-string}))))))
 
     (testing "Get non-existent Key in directory"
       (with-open [^Database db (cfdb/open fdb)]
@@ -236,7 +236,7 @@
         (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
           (fc/set db test-dir (ftup/from) "value")
           (is (= "value" (fc/get db test-dir (ftup/from)
-                                 {:parsefn bs/to-string})))
+                                 {:valfn bs/to-string})))
           (fc/clear db test-dir (ftup/from))
           (is (nil? (fc/get db test-dir (ftup/from)))))))))
 
@@ -340,3 +340,8 @@
          (->> [1 2 3]
               (fc/encode ["test-subspace"])
               (fc/decode (fsub/create ["test-subspace"]))))))
+
+
+(deftest handle-opts-tests
+  (is (= {} (last (fc/handle-opts (fsub/create) (ftup/create [])))))
+  (is (nil? (first (fc/handle-opts (fsub/create) (ftup/create []) {})))))
