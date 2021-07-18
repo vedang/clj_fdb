@@ -10,7 +10,7 @@
   ([prefix]
    (cond
      (vector? prefix) (Subspace. (ftup/create prefix))
-     (instance? Tuple prefix) (Subspace. prefix)
+     (instance? Tuple prefix) (Subspace. ^Tuple prefix)
      :else (throw (IllegalArgumentException.
                    "Don't know how to create Subspace from input"))))
   ([] (Subspace.)))

@@ -21,7 +21,7 @@
   ([^TransactionContext tr path]
    (exists? tr default-directory-layer path))
   ([^TransactionContext tr ds path]
-   (deref (.exists ds tr path))))
+   (deref (.exists ^DirectoryLayer ds tr path))))
 
 
 (defn ^Boolean list
@@ -29,7 +29,7 @@
   ([tr]
    (list tr default-directory-layer))
   ([tr ds]
-   (deref (.list ds tr))))
+   (deref (.list ^DirectoryLayer ds tr))))
 
 
 (defn ^CompletableFuture remove!

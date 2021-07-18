@@ -309,7 +309,7 @@
         random-key ["random-key"]
         random-spc (fsub/create random-prefixed-path)]
     (testing "Get/Setting keys with vectors as Tuples"
-      (with-open [db (cfdb/open fdb)]
+      (with-open [^Database db (cfdb/open fdb)]
         (fc/set db random-prefixed-path [])
         (is (= []
                (fc/get db (apply ftup/from random-prefixed-path)
@@ -317,7 +317,7 @@
                (fc/get db random-prefixed-path
                        (comp ftup/get-items ftup/from-bytes))))))
     (testing "Get/Setting keys with vectors as Subspaces + Tuples"
-      (with-open [db (cfdb/open fdb)]
+      (with-open [^Database db (cfdb/open fdb)]
         (fc/set db random-prefixed-path random-key [])
         (is (= []
                (fc/get db (fsub/pack (fsub/create (apply ftup/from random-prefixed-path))

@@ -15,7 +15,7 @@
          (Tuple/from (into-array Object v)))))
 
 
-(defn from
+(defn ^Tuple from
   "Creates a new Tuple from a variable number of elements.
 
   Note: an empty number of arguments is a valid input to this

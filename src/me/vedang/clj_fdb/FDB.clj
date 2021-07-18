@@ -58,9 +58,9 @@
   Throws: `FDBException`"
   ([^FDB db]
    (.open db))
-  ([^FDB db cluster-file-path]
+  ([^FDB db ^String cluster-file-path]
    (.open db cluster-file-path))
-  ([^FDB db cluster-file-path ^Executor e]
+  ([^FDB db ^String cluster-file-path ^Executor e]
    (.open db cluster-file-path e)))
 
 
