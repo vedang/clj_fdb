@@ -1,6 +1,7 @@
 (ns me.vedang.clj-fdb.core
   (:refer-clojure :exclude [get set range])
-  (:require [me.vedang.clj-fdb.subspace.subspace :as fsub]
+  (:require [me.vedang.clj-fdb.impl :as fimpl]
+            [me.vedang.clj-fdb.subspace.subspace :as fsub]
             [me.vedang.clj-fdb.transaction :as ftr]
             [me.vedang.clj-fdb.tuple.tuple :as ftup])
   (:import [com.apple.foundationdb KeyValue Range Transaction TransactionContext]
@@ -8,71 +9,9 @@
            com.apple.foundationdb.tuple.Tuple
            java.lang.IllegalArgumentException))
 
-
-(def byte-array-class (class (byte-array 0)))
-
-
-(defn ^"[B" encode
-  "Takes input data and returns the byte-array representation of that data.
-  Supports strings, vectors, Tuples, Subspaces, Directories. For any
-  other type of key, please serialize to byte-array yourself."
-  ([k]
-   (cond
-     (nil? k) (ftup/pack (ftup/from)) ;; Handle nil as empty Tuple
-     (instance? byte-array-class k) k
-     (instance? String k) (.getBytes ^String k "UTF-8")
-     (instance? Tuple k) (ftup/pack ^Tuple k)
-     (vector? k) (ftup/pack (ftup/create k))
-     :else (throw (IllegalArgumentException.
-                   "I don't know how to convert input data to a byte-array"))))
-  ([s k]
-   ;; DirectorySubspace also implements Subspace, so s can be either
-   ;; of the two.
-   (let [k' (if (vector? k) (ftup/create k) k)]
-     (cond
-       (nil? s) (encode k')
-       (instance? Subspace s) (fsub/pack s k')
-       (vector? s) (fsub/pack (fsub/create s) k')
-       :else (throw (IllegalArgumentException.
-                     "I don't know how to convert input data to a byte-array"))))))
-
-
-(defn decode
-  "Takes a packed Tuple and returns the contents of the Tuple."
-  ([^"[B" code]
-   (try (when code (ftup/get-items (ftup/from-bytes code)))
-        ;; I don't know how to convert this back, will let caller deal
-        ;; with it.
-        (catch IllegalArgumentException _ code)))
-  ([s code]
-   (cond
-     (nil? s) (decode code)
-     (instance? Subspace s) (ftup/get-items (fsub/unpack s code))
-     (vector? s) (ftup/get-items (fsub/unpack (fsub/create s) code))
-     ;; I don't know how to convert this back, will let caller deal
-     ;; with it.
-     :else code)))
-
-
 (def default-opts
   "The default options to be passed into any options map"
   {})
-
-
-(defn handle-opts
-  "This function makes it easy to deal with the following multiple arity
-  pattern:
-
-  {:arglists '([tc k v] [tc s k v] [tc k v opts] [tc s k v opts])}
-
-  In this case, we have clashing arities due to default opts vs
-  explicitly passed opts. The basic check is that if the argument
-  passed in is a map, it is considered to represent opts. In this
-  case, the missing argument is sent back as nil."
-  [& args]
-  (if (map? (last args))
-    (cons nil args) ; opts map is passed, first argument is nil
-    (concat args '({})))) ; opts map is not passed, use default opts
 
 
 (defn set
@@ -89,11 +28,11 @@
   ([^TransactionContext tc k v]
    (set tc nil k v default-opts))
   ([^TransactionContext tc arg1 arg2 arg3]
-   (let [[s k v opts] (handle-opts arg1 arg2 arg3)]
+   (let [[s k v opts] (fimpl/handle-opts arg1 arg2 arg3)]
      (set tc s k v opts)))
   ([^TransactionContext tc s k v _opts]
-   (let [k-ba (encode s k)
-         v-ba (encode v)]
+   (let [k-ba (fimpl/encode s k)
+         v-ba (fimpl/encode v)]
      (ftr/run tc (fn [^Transaction tr] (ftr/set tr k-ba v-ba))))))
 
 
@@ -105,16 +44,17 @@
 
   The opts map supports the following arguments:
   - Function `valfn` for converting the return value from byte-array
-  to something else."
+  to something else. Note that the byte-array is always sent through
+  the `fimpl/decode` function first."
   {:arglists '([tc k] [tc s k] [tc k opts] [tc s k opts])}
   ([^TransactionContext tc k]
    (get tc k default-opts))
   ([^TransactionContext tc arg1 arg2]
-   (let [[s k opts] (handle-opts arg1 arg2)]
+   (let [[s k opts] (fimpl/handle-opts arg1 arg2)]
      (get tc s k opts)))
   ([^TransactionContext tc s k opts]
-   (let [valfn (:valfn opts decode)
-         k-ba (encode s k)
+   (let [valfn (comp (:valfn opts identity) fimpl/decode)
+         k-ba (fimpl/encode s k)
          v-ba (ftr/read tc (fn [^Transaction tr] (deref (ftr/get tr k-ba))))]
      (when v-ba (valfn v-ba)))))
 
@@ -131,10 +71,10 @@
   ([^TransactionContext tc k]
    (clear tc nil k default-opts))
   ([^TransactionContext tc arg1 arg2]
-   (let [[s k opts] (handle-opts arg1 arg2)]
+   (let [[s k opts] (fimpl/handle-opts arg1 arg2)]
      (clear tc s k opts)))
   ([^TransactionContext tc s k _opts]
-   (let [k-ba (encode s k)]
+   (let [k-ba (fimpl/encode s k)]
      (ftr/run tc (fn [^Transaction tr] (ftr/clear-key tr k-ba))))))
 
 (defn range
@@ -184,15 +124,15 @@
   ([^TransactionContext tc arg1]
    (get-range tc arg1 default-opts))
   ([^TransactionContext tc arg1 arg2]
-   (let [[s k opts] (handle-opts arg1 arg2)]
+   (let [[s k opts] (fimpl/handle-opts arg1 arg2)]
      (get-range tc s k opts)))
   ([^TransactionContext tc s k opts]
    (let [rg (range s k)
-         keyfn (:keyfn opts
-                       (if (or s (instance? Subspace k))
-                         (partial decode (or s k))
-                         decode))
-         valfn (:valfn opts decode)]
+         key-decoder (if (or s (instance? Subspace k))
+                       (partial fimpl/decode (or s k))
+                       fimpl/decode)
+         keyfn (comp (:keyfn opts identity) key-decoder)
+         valfn (comp (:valfn opts identity) fimpl/decode)]
      (ftr/read tc
                (fn [^Transaction tr]
                  (reduce (fn [acc ^KeyValue kv]
@@ -215,7 +155,7 @@
   ([^TransactionContext tc r]
    (clear-range tc nil r default-opts))
   ([^TransactionContext tc arg1 arg2]
-   (let [[s t opts] (handle-opts arg1 arg2)]
+   (let [[s t opts] (fimpl/handle-opts arg1 arg2)]
      (clear-range tc s t opts)))
   ([^TransactionContext tc s t _opts]
    (let [rg (range s t)]

@@ -62,10 +62,7 @@
                 (fc/set tr k (bs/to-byte-array v))))))
 
         (is (= expected-map
-               (fc/get-range db
-                             rg
-                             {:keyfn (comp second fc/decode)
-                              :valfn bs/to-string})))))))
+               (fc/get-range db rg {:keyfn second :valfn bs/to-string})))))))
 
 
 (deftest clear-range-tests
@@ -146,11 +143,8 @@
         (doseq [k input-keys]
           (fc/set db prefixed-subspace (ftup/from k) v))
         (is (= expected-map
-               (fc/get-range db
-                             prefixed-subspace
-                             (ftup/from)
-                             {:keyfn (comp last fc/decode)
-                              :valfn bs/to-string})))))))
+               (fc/get-range db prefixed-subspace (ftup/from)
+                             {:keyfn last :valfn bs/to-string})))))))
 
 
 (deftest clear-subspaced-range-tests
@@ -165,11 +159,8 @@
         (doseq [k input-keys]
           (fc/set db prefixed-subspace (ftup/from k) v))
         (is (= expected-map
-               (fc/get-range db
-                             prefixed-subspace
-                             (ftup/from)
-                             {:keyfn (comp last fc/decode)
-                              :valfn bs/to-string})))
+               (fc/get-range db prefixed-subspace (ftup/from)
+                             {:keyfn last :valfn bs/to-string})))
         (fc/clear-range db prefixed-subspace)
         (is (nil? (fc/get db prefixed-subspace (ftup/from)))))))
 
@@ -267,11 +258,8 @@
           (doseq [k input-keys]
             (fc/set db test-dir (ftup/from k) v))
           (is (= expected-map
-                 (fc/get-range db
-                               test-dir
-                               (ftup/from)
-                               {:keyfn (comp last fc/decode)
-                                :valfn bs/to-string})))
+                 (fc/get-range db test-dir (ftup/from)
+                               {:keyfn last :valfn bs/to-string})))
           (fc/clear-range db test-dir)
           (is (nil? (fc/get db test-dir (ftup/from)))))))
 
@@ -322,26 +310,3 @@
                (fc/get db random-spc random-key)
                (fc/get db random-prefixed-path
                        (apply ftup/from random-key))))))))
-
-
-(deftest encode-decode-tests
-  (is (= [42 43 44] (-> [42 43 44] fc/encode fc/decode)))
-  (is (= [] (-> [] fc/encode fc/decode)))
-
-  (let [id (UUID/randomUUID)]
-    (is (= [id] (-> [id] fc/encode fc/decode))))
-
-  (is (= ["test-subspace" 1 2 3]
-         (->> [1 2 3] (fc/encode ["test-subspace"]) fc/decode)))
-  (is (= [1 2 3]
-         (->> [1 2 3]
-             (fc/encode ["test-subspace"])
-             (fc/decode ["test-subspace"]))
-         (->> [1 2 3]
-              (fc/encode ["test-subspace"])
-              (fc/decode (fsub/create ["test-subspace"]))))))
-
-
-(deftest handle-opts-tests
-  (is (= {} (last (fc/handle-opts (fsub/create) (ftup/create [])))))
-  (is (nil? (first (fc/handle-opts (fsub/create) (ftup/create []) {})))))

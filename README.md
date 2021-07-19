@@ -119,8 +119,8 @@ in the core ns:
     (with-open [db (cfdb/open fdb)]
       (fc/set db subspace ["A"] ["Value A"])
       (fc/set db subspace ["B"] ["Value B"])
-      (fc/get-range db subspace [] {:valfn (comp first fc/decode)})))
-  ;; => {["test" "keys" "A"] "Value A", ["test" "keys" "B"] "Value B"}
+      (fc/get-range db subspace [] {:valfn first})))
+  ;; => {["A"] "Value A", ["B"] "Value B"}
 
   (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
         subspace (fsub/create ["test" "keys"])]

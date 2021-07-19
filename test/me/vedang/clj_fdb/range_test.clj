@@ -1,18 +1,14 @@
 (ns me.vedang.clj-fdb.range-test
-  (:require
-    [byte-streams :as bs]
-    [clojure.test :refer [deftest is use-fixtures]]
-    [me.vedang.clj-fdb.FDB :as cfdb]
-    [me.vedang.clj-fdb.core :as fc]
-    [me.vedang.clj-fdb.internal.util :as u]
-    [me.vedang.clj-fdb.range :as frange]
-    [me.vedang.clj-fdb.transaction :as ftr]
-    [me.vedang.clj-fdb.tuple.tuple :as ftup])
-  (:import
-    (com.apple.foundationdb
-      Database
-      Transaction)))
-
+  (:require [byte-streams :as bs]
+            [clojure.test :refer [deftest is use-fixtures]]
+            [me.vedang.clj-fdb.core :as fc]
+            [me.vedang.clj-fdb.FDB :as cfdb]
+            [me.vedang.clj-fdb.impl :as fimpl]
+            [me.vedang.clj-fdb.internal.util :as u]
+            [me.vedang.clj-fdb.range :as frange]
+            [me.vedang.clj-fdb.transaction :as ftr]
+            [me.vedang.clj-fdb.tuple.tuple :as ftup])
+  (:import [com.apple.foundationdb Database Transaction]))
 
 (use-fixtures :each u/test-fixture)
 
@@ -30,16 +26,16 @@
             (fc/set tr (ftup/from u/*test-prefix* k) test-val))))
       (is (= expected-map-1
              (fc/get-range db
+                           ;; one style of packing
                            (frange/range (ftup/pack (ftup/from u/*test-prefix* "bar"))
                                          (ftup/pack (ftup/from u/*test-prefix* "baz")))
-                           {:keyfn (comp second fc/decode)
-                            :valfn bs/to-string})))
+                           {:keyfn second :valfn bs/to-string})))
       (is (= expected-map-2
              (fc/get-range db
-                           (frange/range (ftup/pack (ftup/from u/*test-prefix* "a"))
-                                         (ftup/pack (ftup/from u/*test-prefix* "z")))
-                           {:keyfn (comp second fc/decode)
-                            :valfn bs/to-string})))
+                           ;; another style of packing
+                           (frange/range (fimpl/encode [u/*test-prefix* "a"])
+                                         (fimpl/encode [u/*test-prefix* "z"]))
+                           {:keyfn second :valfn bs/to-string})))
       (is (= {}
              (fc/get-range db
                            (frange/range (ftup/pack (ftup/from u/*test-prefix* "c"))
@@ -63,24 +59,15 @@
             (fc/set tr (apply ftup/from u/*test-prefix* k) test-val))))
       (is (= expected-map-1
              (fc/get-range db
-                           (-> u/*test-prefix*
-                               (ftup/from "bar")
-                               ftup/pack
-                               frange/starts-with)
-                           {:keyfn (comp (partial drop 1) fc/decode)
-                            :valfn bs/to-string})))
+                           ;; one style of packing
+                           (frange/starts-with (ftup/pack (ftup/from u/*test-prefix* "bar")))
+                           {:keyfn (partial drop 1) :valfn bs/to-string})))
       ;; startswith in tuples requires exact match
       (is (= {}
              (fc/get-range db
-                           (-> u/*test-prefix*
-                               (ftup/from "bb")
-                               ftup/pack
-                               frange/starts-with))))
+                           ;; another style of packing
+                           (frange/starts-with (fimpl/encode [u/*test-prefix* "bb"])))))
       (is (= expected-map-2
              (fc/get-range db
-                           (-> u/*test-prefix*
-                               (ftup/from "bbz")
-                               ftup/pack
-                               frange/starts-with)
-                           {:keyfn (comp (partial drop 1) fc/decode)
-                            :valfn bs/to-string}))))))
+                           (frange/starts-with (fimpl/encode [u/*test-prefix* "bbz"]))
+                           {:keyfn (partial drop 1) :valfn bs/to-string}))))))
