@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [get set range])
   (:require [me.vedang.clj-fdb.impl :as fimpl]
             [me.vedang.clj-fdb.subspace.subspace :as fsub]
+            [me.vedang.clj-fdb.mutation-type :as fmut]
             [me.vedang.clj-fdb.transaction :as ftr]
             [me.vedang.clj-fdb.tuple.tuple :as ftup])
   (:import [com.apple.foundationdb KeyValue Range Transaction TransactionContext]
@@ -173,3 +174,28 @@
   ([^TransactionContext tc s t _opts]
    (let [rg (range s t)]
      (ftr/run tc (fn [^Transaction tr] (ftr/clear-range tr rg))))))
+
+
+(let [empty-byte-array (byte-array 0)]
+  (defn mutate!
+    "An atomic operation is a single database command that carries out
+  several logical steps: reading the value of a key, performing a
+  transformation on that value, and writing the result."
+    {:arglists '([tc mut k] [tc mut s k] [tc mut k byte-op] [tc mut s k byte-op])}
+    ([^TransactionContext tc mut arg1]
+     (if (instance? Subspace arg1)
+       (mutate! tc mut arg1 (ftup/from) empty-byte-array)
+       (mutate! tc mut nil arg1 empty-byte-array)))
+    ([^TransactionContext tc mut arg1 arg2]
+     (if (instance? Subspace arg1)
+       ;; treat arg2 as the key, and send an empty-byte-array.
+       (mutate! tc mut arg1 arg2 empty-byte-array)
+       ;; treat arg2 as the param
+       (mutate! tc mut nil arg1 arg2)))
+    ([^TransactionContext tc mut s k byte-op]
+     (ftr/run tc
+       (fn [^Transaction tr]
+         (ftr/mutate! tr
+                      (fmut/mutation mut)
+                      (fimpl/encode s k)
+                      (fimpl/encode byte-op)))))))

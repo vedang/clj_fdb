@@ -10,7 +10,7 @@
             [me.vedang.clj-fdb.transaction :as ftr]
             [me.vedang.clj-fdb.tuple.tuple :as ftup])
   (:import [com.apple.foundationdb Database Transaction]
-           java.util.UUID))
+           java.nio.ByteBuffer))
 
 (use-fixtures :each u/test-fixture)
 
@@ -308,3 +308,63 @@
                (fc/get db random-spc random-key)
                (fc/get db random-prefixed-path
                        (apply ftup/from random-key))))))))
+
+
+(def byte-array-class (class (byte-array 0)))
+
+(bs/def-conversion [java.lang.Integer byte-array-class]
+  [integer]
+  (.. (ByteBuffer/allocate 4)
+      (putInt integer)
+      array))
+
+(bs/def-conversion [byte-array-class java.lang.Integer]
+  [integer-ba]
+  (.. (ByteBuffer/wrap integer-ba)
+      (getInt)))
+
+
+(deftest mutation-tests
+  (let [random-prefixed-path [u/*test-prefix* (u/rand-str 5)]
+        random-key ["random-key"]
+        random-spc (fsub/create random-prefixed-path)]
+    (testing "Mutation with no subspace passed"
+      (with-open [^Database db (cfdb/open fdb)]
+        (fc/mutate! db :add random-key)
+        (is (= [] (fc/get db random-key)))
+        (fc/mutate! db :add random-key (bs/to-byte-array (int 1)))
+        (is (= 1 (fc/get db random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :add random-key (bs/to-byte-array (int 1)))
+        (is (= 2 (fc/get db random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :bit-or random-key (bs/to-byte-array (int 1)))
+        (is (= 3 (fc/get db random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :bit-and random-key (bs/to-byte-array (int 1)))
+        (is (= 1 (fc/get db random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :bit-xor random-key (bs/to-byte-array (int 2)))
+        (is (= 3 (fc/get db random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :bit-xor random-key (bs/to-byte-array (int 1)))
+        (is (= 2 (fc/get db random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :max random-key (bs/to-byte-array (int 1)))
+        (is (= 2 (fc/get db random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :max random-key (bs/to-byte-array (int 3)))
+        (is (= 3 (fc/get db random-key {:valfn #(bs/convert % Integer)})))))
+    (testing "Mutation with subspace passed"
+      (with-open [^Database db (cfdb/open fdb)]
+        (fc/mutate! db :add random-spc random-key)
+        (is (= [] (fc/get db random-spc random-key)))
+        (fc/mutate! db :add random-spc random-key (bs/to-byte-array (int 1)))
+        (is (= 1 (fc/get db random-spc random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :add random-spc random-key (bs/to-byte-array (int 1)))
+        (is (= 2 (fc/get db random-spc random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :bit-or random-spc random-key (bs/to-byte-array (int 1)))
+        (is (= 3 (fc/get db random-spc random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :bit-and random-spc random-key (bs/to-byte-array (int 1)))
+        (is (= 1 (fc/get db random-spc random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :bit-xor random-spc random-key (bs/to-byte-array (int 2)))
+        (is (= 3 (fc/get db random-spc random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :bit-xor random-spc random-key (bs/to-byte-array (int 1)))
+        (is (= 2 (fc/get db random-spc random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :max random-spc random-key (bs/to-byte-array (int 1)))
+        (is (= 2 (fc/get db random-spc random-key {:valfn #(bs/convert % Integer)})))
+        (fc/mutate! db :max random-spc random-key (bs/to-byte-array (int 3)))
+        (is (= 3 (fc/get db random-spc random-key {:valfn #(bs/convert % Integer)})))))))

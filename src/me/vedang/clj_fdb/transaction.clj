@@ -1,7 +1,7 @@
 (ns me.vedang.clj-fdb.transaction
   (:refer-clojure :exclude [get set read])
   (:import clojure.lang.IFn
-           [com.apple.foundationdb Range Transaction TransactionContext]
+           [com.apple.foundationdb MutationType Range Transaction TransactionContext]
            com.apple.foundationdb.async.AsyncIterable
            java.util.concurrent.CompletableFuture
            [java.util.function Function Supplier]))
@@ -111,3 +111,11 @@
   will not affect the database until commit() is called."
   [^Transaction tr ^Range rg]
   (.clear tr rg))
+
+
+(defn mutate!
+  "An atomic operation is a single database command that carries out
+  several logical steps: reading the value of a key, performing a
+  transformation on that value, and writing the result."
+  [^Transaction tr ^MutationType mut ^"[B" k ^"[B" param]
+  (.mutate tr mut k param))
