@@ -42,10 +42,15 @@
   - key to be fetched `k` (should be byte-array, or convertible to byte-array)
   - `Subspace` `s`, if you want to store the key under one.
 
-  The opts map supports the following arguments:
+  The `opts` map supports the following arguments:
+
   - Function `valfn` for converting the return value from byte-array
   to something else. Note that the byte-array is always sent through
-  the `fimpl/decode` function first."
+  the `fimpl/decode` function first. (So if you have stored a Tuple in
+  FDB, the valfn will be passed a vector of elements instead of a FDB
+  Tuple Object)
+
+  Returns the value stored at `k`, nil if no value exists."
   {:arglists '([tc k] [tc s k] [tc k opts] [tc s k opts])}
   ([^TransactionContext tc k]
    (get tc k default-opts))
@@ -66,7 +71,7 @@
   - `opts` : unused at the moment, will support options like `:async?`
   in a later release.
 
-  and clears the key from the db. Returns nil."
+  Clears the key from the db. Returns nil."
   {:arglists '([tc k] [tc s k] [tc k opts] [tc s k opts])}
   ([^TransactionContext tc k]
    (clear tc nil k default-opts))
@@ -110,16 +115,24 @@
 (defn get-range
   "Takes the following:
   - TransactionContext `tc`
-  - Range of keys to fetch or a Subspace `r-or-s`
-  - IF `r-or-s` is a Subspace, can also accept `t`, a Tuple within that Subspace
-  - `keyfn` and `valfn`, to transform the key/value to the correct format.
+  - Range of keys to fetch `rng` or a Subspace `subspace`
+  - In the case of a `subspace`, can also accept `t`, a Tuple within
+  that Subspace
 
-  and returns a map of key/value pairs.
+  The `opts` map takes the following option at the moment:
+  - `keyfn` :
+  - `valfn` : Functions to transform the key/value to the correct format.
+
+  Note that the byte-arrays are always sent through the `fimpl/decode`
+  function first. (So if you have stored a Tuple in FDB, the `valfn`
+  will be passed a vector of elements instead of a FDB Tuple Object)
 
   Note that this function is greedy and forces the evaluation of the
   entire iterable. Use with care. If you want to get a lazy iterator,
   use the underlying get-range functions from `ftr` or `fsub`
-  namespaces."
+  namespaces.
+
+  Returns a map of key/value pairs."
   {:arglists '([tc rnge] [tc subspace] [tc k opts] [tc s k] [tc s k opts])}
   ([^TransactionContext tc arg1]
    (get-range tc arg1 default-opts))
@@ -150,7 +163,7 @@
   - `opts` : unused at the moment, will support options like `:async?`
   in a later release.
 
-  and clears the range from the db. Returns nil."
+  Clears the range from the db. Returns nil."
   {:arglists '([tc r] [tc s t] [tc r opts] [tc s t opts])}
   ([^TransactionContext tc r]
    (clear-range tc nil r default-opts))
