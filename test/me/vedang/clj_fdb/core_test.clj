@@ -14,12 +14,12 @@
 
 (use-fixtures :each u/test-fixture)
 
+(def fdb (cfdb/select-api-version cfdb/clj-fdb-api-version))
 
 (deftest get-set-tests
   (testing "Test the best-case path for `fc/set` and `fc/get`"
     (let [k (ftup/from u/*test-prefix* "foo")
-          v "1"
-          fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)]
+          v "1"]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db k (bs/to-byte-array v))
         (is (= v (fc/get db k {:valfn bs/to-string})))))))
@@ -27,16 +27,14 @@
 
 (deftest get-non-existent-key-tests
   (testing "Test that `fc/get` on a non-existent key returns `nil`"
-    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-          k (ftup/from u/*test-prefix* "non-existent")]
+    (let [k (ftup/from u/*test-prefix* "non-existent")]
       (with-open [^Database db (cfdb/open fdb)]
         (is (nil? (fc/get db k)))))))
 
 
 (deftest clear-key-tests
   (testing "Test the best-case path for `fc/clear`"
-    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-          k (ftup/from u/*test-prefix* "foo")
+    (let [k (ftup/from u/*test-prefix* "foo")
           v "1"]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db k (bs/to-byte-array v))
@@ -47,8 +45,7 @@
 
 (deftest get-range-tests
   (testing "Test the best-case path for `fc/get-range`. End is exclusive."
-    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-          input-keys ["bar" "car" "foo" "gum"]
+    (let [input-keys ["bar" "car" "foo" "gum"]
           begin      (ftup/pack (ftup/from u/*test-prefix* "b"))
           end        (ftup/pack (ftup/from u/*test-prefix* "g"))
           rg         (frange/range begin end)
@@ -67,8 +64,7 @@
 
 (deftest clear-range-tests
   (testing "Test the best-case path for `fc/clear-range`. End is exclusive."
-    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-          input-keys ["bar" "car" "foo" "gum"]
+    (let [input-keys ["bar" "car" "foo" "gum"]
           begin      (ftup/pack (ftup/from u/*test-prefix* "b"))
           end        (ftup/pack (ftup/from u/*test-prefix* "g"))
           rg         (frange/range begin end)
@@ -88,8 +84,9 @@
 
 (deftest get-set-subspaced-key-tests
   (testing "Get/Set Subspaced Key using empty Tuple"
-    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-          random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
+    (let [random-prefixed-tuple (ftup/from u/*test-prefix*
+                                           "subspace"
+                                           (u/rand-str 5))
           prefixed-subspace (fsub/create random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from) "value")
@@ -102,8 +99,9 @@
                        {:valfn bs/to-string}))))))
 
   (testing "Get/Set Subspaced Key using non-empty Tuple"
-    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-          random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
+    (let [random-prefixed-tuple (ftup/from u/*test-prefix*
+                                           "subspace"
+                                           (u/rand-str 5))
           prefixed-subspace (fsub/create random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from "a") "value")
@@ -111,8 +109,9 @@
                (fc/get db prefixed-subspace (ftup/from "a")
                        {:valfn bs/to-string}))))))
   (testing "Get non-existent Subspaced Key"
-    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-          random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
+    (let [random-prefixed-tuple (ftup/from u/*test-prefix*
+                                           "subspace"
+                                           (u/rand-str 5))
           prefixed-subspace (fsub/create random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
         (is (nil? (fc/get db prefixed-subspace (ftup/from "a"))))))))
@@ -120,8 +119,9 @@
 
 (deftest clear-subspaced-key-tests
   (testing "Clear subspaced key"
-    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-          random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
+    (let [random-prefixed-tuple (ftup/from u/*test-prefix*
+                                           "subspace"
+                                           (u/rand-str 5))
           prefixed-subspace (fsub/create random-prefixed-tuple)]
       (with-open [^Database db (cfdb/open fdb)]
         (fc/set db prefixed-subspace (ftup/from) "value")
@@ -133,8 +133,9 @@
 
 (deftest get-subspaced-range-tests
   (testing "Get subspaced range"
-    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-          random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
+    (let [random-prefixed-tuple (ftup/from u/*test-prefix*
+                                           "subspace"
+                                           (u/rand-str 5))
           prefixed-subspace (fsub/create random-prefixed-tuple)
           input-keys ["bar" "car" "foo" "gum"]
           v "10"
@@ -149,8 +150,9 @@
 
 (deftest clear-subspaced-range-tests
   (testing "Clear subspaced range completely"
-    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-          random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
+    (let [random-prefixed-tuple (ftup/from u/*test-prefix*
+                                           "subspace"
+                                           (u/rand-str 5))
           prefixed-subspace (fsub/create random-prefixed-tuple)
           input-keys ["bar" "car" "foo" "gum"]
           v "10"
@@ -165,8 +167,9 @@
         (is (nil? (fc/get db prefixed-subspace (ftup/from)))))))
 
   (testing "Clear subspaced range partially"
-    (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-          random-prefixed-tuple (ftup/from u/*test-prefix* "subspace" (u/rand-str 5))
+    (let [random-prefixed-tuple (ftup/from u/*test-prefix*
+                                           "subspace"
+                                           (u/rand-str 5))
           prefixed-subspace (fsub/create random-prefixed-tuple)
           input-keys ["bar" ["bar" "bar"] ["bar" "baz"] "car" "foo" "gum"]
           v "10"
@@ -194,8 +197,7 @@
 
 
 (deftest get-set-directory-key-tests
-  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-        random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]]
+  (let [random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]]
     (testing "Get/Set Key inside a directory using empty Tuple"
       (with-open [^Database db (cfdb/open fdb)]
         (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
@@ -220,8 +222,7 @@
 
 
 (deftest clear-directory-key-tests
-  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-        random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]]
+  (let [random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]]
     (testing "Clear a key that is nested in a directory"
       (with-open [^Database db (cfdb/open fdb)]
         (let [test-dir (fdir/create-or-open! db random-prefixed-path)]
@@ -233,8 +234,7 @@
 
 
 (deftest get-directory-range-tests
-  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-        random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]
+  (let [random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]
         input-keys ["bar" "car" "foo" "gum"]
         v ["10"]
         expected-map {["bar"] v ["car"] v ["foo"] v ["gum"] v}]
@@ -247,8 +247,7 @@
 
 
 (deftest clear-directory-range-tests
-  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-        random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]
+  (let [random-prefixed-path [u/*test-prefix* "subspace" (u/rand-str 5)]
         input-keys ["bar" "car" "foo" "gum"]
         v "10"
         expected-map {"bar" v "car" v "foo" v "gum" v}]
@@ -290,8 +289,7 @@
                                  {:valfn bs/to-string})))))))))
 
 (deftest vector-as-input-tests
-  (let [fdb (cfdb/select-api-version cfdb/clj-fdb-api-version)
-        random-prefixed-path [u/*test-prefix* (u/rand-str 5)]
+  (let [random-prefixed-path [u/*test-prefix* (u/rand-str 5)]
         random-key ["random-key"]
         random-spc (fsub/create random-prefixed-path)]
     (testing "Get/Setting keys with vectors as Tuples"
