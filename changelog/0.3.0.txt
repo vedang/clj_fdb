@@ -1,0 +1,36 @@
+-*- mode: org; comment-column: 0; -*-
+
+* Version
+  - 0.3.0
+  - Release Date: <2021-07-25 Sun>
+
+* Changes
+- This release contains *significant breaking changes*
+- The API now supports Clojure vectors as Tuples and Subspaces (they
+  are converted internally). This makes the library much more
+  intuitive to use and my recommendation is to always use Subspaces +
+  Tuples for keys and where possible use Tuples for values in FDB.
+- ~encode~ and ~decode~ functions have been removed from the core API.
+  When using vectors, they are unnecessary.
+- Support for top-level ~keyfn~ and ~valfn~ arguments has been moved
+  to an ~opts~ map, which will support more options in the future.
+- The behavior of ~keyfn~ / ~valfn~ has changed and become more
+  intuitive. Refer to examples in the README to understand how to use
+  these functions.
+- ~parsefn~ has been renamed to ~valfn~ for consistency
+- MutationType and ~mutate~ support is now available and baked into
+  the core API. (Check out docs for ~fc/mutate!~ and it's usage in
+  ~farstar~)
+- The following functionality will be added in upcoming releases:
+  + Leveraging the power of Clojure for FDB async operations
+  + Full support for FDB watches
+  + Support for versionstamps
+- This library is still in the 0.x stage. I expect new releases to
+  have breakage in API until I get to the 1.0.0 release, post which
+  the API will be permanently supported.
+
+* Commit history
+
+- (#18) MutationType support is now available in the core API as ~fc/mutate!~
+- Auto handle vectors, remove encode/decode from core API
+- Provide a consistent ~create~ function across Tuple, Subspace, Directory layers
