@@ -13,11 +13,12 @@ see the functions in action.
 
 At the moment, this ns provides the following functions:
 
-    - set
-    - get
-    - clear
-    - get-range
-    - clear-range
+    - set [k v] [s k v] [k v opts] [s k v opts]
+    - get [k] [s k] [k opts] [s k opts]
+    - clear [k] [s k] [k opts] [s k opts]
+    - get-range [r] [s] [k opts] [s k] [s k opts]
+    - clear-range [r] [s t] [r opts] [s t opts]
+    - mutate! [mut k] [mut s k] [mut k byte-op] [mut s k byte-op]
 
 FDB only stores data as bytes. When using this library, you are
 expected to pass in data (both keys as well as values) as either:
@@ -26,14 +27,14 @@ expected to pass in data (both keys as well as values) as either:
 - FDB data-structures (Tuples, Subspaces, DirectoryLayers, converted
   to byte-arrays internally using functions provided by FDB)
 
-The library transparently converts Tuples, Subspaces and
-DirectoryLayers into byte-arrays (and back) so my recommendation is
+The library *transparently converts Tuples, Subspaces and
+DirectoryLayers into byte-arrays (and back)* so my recommendation is
 that you always use these for keys in FDB, and where possible use
 Tuples to wrap the values you want to store in FDB. If you build your
-keys and values using Clojure's `vector` function, your data will be
-handled automatically. Note that if you use non-Tuple data as values,
-the library will return the byte-array as-is to you. You need to
-either pass in a `:valfn` to convert the byte-array to data or you
+keys and values **using Clojure's `vector` function**, your data will
+be handled automatically. Note that if you use non-Tuple data as
+values, the library will return the byte-array as-is to you. You need
+to either pass in a `:valfn` to convert the byte-array to data or you
 need to handle the conversion yourself. Refer to the examples below.
 
 The idea is to write a really thin "clojure-y" wrapper on top of the
