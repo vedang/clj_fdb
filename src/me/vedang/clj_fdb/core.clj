@@ -1,11 +1,12 @@
 (ns me.vedang.clj-fdb.core
   (:refer-clojure :exclude [get set range])
   (:require [me.vedang.clj-fdb.impl :as fimpl]
-            [me.vedang.clj-fdb.subspace.subspace :as fsub]
+            [me.vedang.clj-fdb.key-selector :as sut]
             [me.vedang.clj-fdb.mutation-type :as fmut]
+            [me.vedang.clj-fdb.subspace.subspace :as fsub]
             [me.vedang.clj-fdb.transaction :as ftr]
             [me.vedang.clj-fdb.tuple.tuple :as ftup])
-  (:import [com.apple.foundationdb KeyValue Range Transaction TransactionContext]
+  (:import [com.apple.foundationdb KeySelector KeyValue Range Transaction TransactionContext]
            com.apple.foundationdb.subspace.Subspace
            com.apple.foundationdb.tuple.Tuple
            java.lang.IllegalArgumentException))
@@ -112,17 +113,32 @@
        (fsub/range s t))
      (range arg2))))
 
+(defn- create-range-args [arg1 arg2 {:keys [skip]}]
+  (if (instance? KeySelector arg1)
+    [(cond-> arg1 skip (sut/add skip)) arg2]
+    [(range arg1 arg2)]))
+
+(defn- get-key-decoder [arg1 arg2]
+  (cond (instance? KeySelector arg1)
+        fimpl/decode
+        (or arg1 (instance? Subspace arg2))
+        (partial fimpl/decode (or arg1 arg2))
+        :else fimpl/decode))
 
 (defn get-range
   "Takes the following:
   - TransactionContext `tc`
-  - Range of keys to fetch `rng` or a Subspace `subspace`
+  - Range of keys to fetch `rng`, Subspace `subspace` or a Keyselector
+  pair of `begin` and `end`.
   - In the case of a `subspace`, can also accept `t`, a Tuple within
   that Subspace
 
   The `opts` map takes the following option at the moment:
   - `keyfn` :
   - `valfn` : Functions to transform the key/value to the correct format.
+  - `limit` : limit the number of returned tuples
+  - `skip`  : skip a number of keys from the beginning of the range
+              (currently only works with KeySelectors)
 
   Note that the byte-arrays are always sent through the `fimpl/decode`
   function first. (So if you have stored a Tuple in FDB, the `valfn`
@@ -134,19 +150,21 @@
   namespaces.
 
   Returns a map of key/value pairs."
-  {:arglists '([tc rnge] [tc subspace] [tc k opts] [tc s k] [tc s k opts])}
+  {:arglists '([tc rnge] [tc subspace] [tc k opts] [tc s k]
+               [tc begin end] [tc s k opts] [tc begin end opts])}
   ([^TransactionContext tc arg1]
    (get-range tc arg1 default-opts))
   ([^TransactionContext tc arg1 arg2]
-   (let [[s k opts] (fimpl/handle-opts arg1 arg2)]
-     (get-range tc s k opts)))
-  ([^TransactionContext tc s k opts]
-   (let [rg (range s k)
-         key-decoder (if (or s (instance? Subspace k))
-                       (partial fimpl/decode (or s k))
-                       fimpl/decode)
-         keyfn (comp (:keyfn opts identity) key-decoder)
-         valfn (comp (:valfn opts identity) fimpl/decode)]
+   (let [[arg1 arg2 opts] (fimpl/handle-opts arg1 arg2)]
+     (get-range tc arg1 arg2 opts)))
+  ([^TransactionContext tc arg1 arg2 {:keys [limit keyfn valfn] :as opts}]
+   (let [range-args (cond-> (create-range-args arg1 arg2 opts)
+                      limit (conj limit))
+         key-decoder (get-key-decoder arg1 arg2)
+         keyfn (cond->> key-decoder
+                 keyfn (comp keyfn))
+         valfn (cond->> fimpl/decode
+                 valfn (comp valfn))]
      (ftr/read tc
                (fn [^Transaction tr]
                  (reduce (fn [acc ^KeyValue kv]
@@ -154,8 +172,7 @@
                                   (keyfn (.getKey kv))
                                   (valfn (.getValue kv))))
                          {}
-                         (ftr/get-range tr rg)))))))
-
+                         (apply ftr/get-range tr range-args)))))))
 
 (defn clear-range
   "Takes the following:

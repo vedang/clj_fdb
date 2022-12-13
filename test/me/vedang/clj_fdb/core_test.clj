@@ -1,10 +1,11 @@
 (ns me.vedang.clj-fdb.core-test
   (:require [byte-streams :as bs]
             [clojure.test :refer [deftest is testing use-fixtures]]
+            [me.vedang.clj-fdb.FDB :as cfdb]
             [me.vedang.clj-fdb.core :as fc]
             [me.vedang.clj-fdb.directory.directory :as fdir]
-            [me.vedang.clj-fdb.FDB :as cfdb]
             [me.vedang.clj-fdb.internal.util :as u]
+            [me.vedang.clj-fdb.key-selector :as sut]
             [me.vedang.clj-fdb.range :as frange]
             [me.vedang.clj-fdb.subspace.subspace :as fsub]
             [me.vedang.clj-fdb.transaction :as ftr]
@@ -61,6 +62,105 @@
         (is (= expected-map
                (fc/get-range db rg {:keyfn second :valfn bs/to-string})))))))
 
+(deftest get-range-with-range-test
+  ;; foo foo0 ... foo9 as keys
+  (let [input-keys (->> (for [i (range 10)]
+                          (str "foo" i))
+                        (into ["foo"]))
+        v "1"]
+    (with-open [^Database db (cfdb/open fdb)]
+      (ftr/run db
+        (fn [^Transaction tr]
+          (doseq [k input-keys]
+            (let [k (ftup/from u/*test-prefix* k)]
+              (fc/set tr k (bs/to-byte-array v))))))
+
+      (testing "get-range with frange/range"
+        (let [begin      (ftup/pack (ftup/from u/*test-prefix* "foo"))
+              end        (ftup/pack (ftup/from u/*test-prefix* "foo3"))
+              rg         (frange/range begin end)]
+          (is (= {"foo" v "foo0" v "foo1" v "foo2" v}
+                 (fc/get-range db rg {:keyfn second :valfn bs/to-string})))))
+
+      (testing "get-range with frange/range and limit"
+        (let [begin      (ftup/pack (ftup/from u/*test-prefix* "foo"))
+              end        (ftup/pack (ftup/from u/*test-prefix* "foo3"))
+              rg         (frange/range begin end)]
+          (is (= {"foo" v "foo0" v}
+                 (fc/get-range db rg {:keyfn second :valfn bs/to-string :limit 2}))))))))
+
+(deftest get-range-with-subspace-test
+  ;; foo foo0 ... foo9 as keys
+  (let [input-keys (->> (for [i (range 10)]
+                          (str "foo" i))
+                        (into ["foo"]))
+        subspace (fsub/create [u/*test-prefix* "the-store"])
+        v "1"]
+    (with-open [^Database db (cfdb/open fdb)]
+      (ftr/run db
+        (fn [^Transaction tr]
+          (doseq [k input-keys]
+            (let [k (ftup/from k)]
+              (fc/set tr subspace k (bs/to-byte-array v))))))
+
+      (testing "get-range with subspace"
+        (is (=  (zipmap input-keys (repeat v))
+                (fc/get-range db subspace {:keyfn first :valfn bs/to-string}))))
+
+      (testing "get-range with subspace limit"
+        (is (= {"foo" v "foo0" v}
+               (fc/get-range db subspace {:keyfn first :valfn bs/to-string :limit 2}))))
+
+      (testing "get-range with subspace and tuple"
+        (is (= (zipmap input-keys (repeat v))
+               (fc/get-range db subspace (ftup/from) {:keyfn first :valfn bs/to-string}))))
+
+      (testing "get-range with subspace and tuple and limit"
+        (is (= {"foo" v "foo0" v}
+               (fc/get-range db subspace (ftup/from) {:keyfn first :valfn bs/to-string :limit 2})))))))
+
+(defn- third [c] (nth c 2))
+
+(deftest get-range-with-keyselectors-test
+  ;; foo foo0 ... foo9 as keys
+  (let [input-keys (->> (for [i (range 10)]
+                          (str "foo" i))
+                        (into ["foo"]))
+        subspace (fsub/create [u/*test-prefix* "the-store"])
+        v "1"]
+    (with-open [^Database db (cfdb/open fdb)]
+      (ftr/run db
+        (fn [^Transaction tr]
+          (doseq [k input-keys]
+            (let [k (ftup/from k)]
+              (fc/set tr subspace k (bs/to-byte-array v))))))
+
+      (testing "get-range with keyselectors"
+        (is (=  (zipmap (take 6 input-keys) (repeat v))
+                (fc/get-range db
+                              (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo")))
+                              (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo5")))
+                              {:keyfn third :valfn bs/to-string}))))
+
+      (testing "get-range with keyselectors and limit"
+        (is (= {"foo" v "foo0" v}
+               (fc/get-range db
+                             (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo")))
+                             (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo5")))
+                             {:keyfn third :valfn bs/to-string :limit 2}))))
+
+      (testing "get-range with keyselectors and limit and skip"
+        (is (= {"foo1" v "foo2" v}
+               (fc/get-range db
+                             (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo")))
+                             (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo5")))
+                             {:keyfn third :valfn bs/to-string :limit 2 :skip 2})))
+        ;; case where skip goes beyond end keyselector
+        (is (= {"foo4" v }
+               (fc/get-range db
+                             (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo")))
+                             (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo5")))
+                             {:keyfn third :valfn bs/to-string :limit 2 :skip 5})))))))
 
 (deftest clear-range-tests
   (testing "Test the best-case path for `fc/clear-range`. End is exclusive."
