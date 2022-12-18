@@ -6,8 +6,7 @@
  :aliases
  {:dev
   {:extra-paths ["dev"]
-   :extra-deps  {org.clojure/clojure            {:mvn/version "1.11.1"}
-                 com.lambdaisland/classpath     {:mvn/version "0.0.27"}}}
+   :extra-deps  {org.clojure/clojure            {:mvn/version "1.11.1"}}}
 
   :test
   {:extra-paths ["test"]
