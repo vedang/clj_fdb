@@ -1,7 +1,7 @@
 (ns me.vedang.clj-fdb.transaction
   (:refer-clojure :exclude [get set read])
   (:import clojure.lang.IFn
-           [com.apple.foundationdb MutationType Range Transaction TransactionContext]
+           [com.apple.foundationdb MutationType KeySelector Range Transaction TransactionContext]
            com.apple.foundationdb.async.AsyncIterable
            java.util.concurrent.CompletableFuture
            [java.util.function Function Supplier]))
@@ -89,9 +89,16 @@
   "Gets an ordered range of keys and values from the database. The
   begin and end keys are specified by byte[] arrays, with the begin
   key inclusive and the end key exclusive. Ranges are returned from
-  calls to Tuple.range() and Range.startsWith(byte[])."
-  [^Transaction tr ^Range rg]
-  (.getRange tr rg))
+  calls to Tuple.range(), Range.startsWith(byte[]) or can be constructed
+  explicitly. The other option is to use KeySelectors to specify the
+  beginning and end of a Range to return."
+  {:arglists '([tc rnge] [tc rnge limit] [tc begin end] [tc begin end limit])}
+  ([^Transaction tr ^Range rg]
+   (.getRange tr rg))
+  ([^Transaction tr arg1 arg2]
+   (.getRange tr arg1 arg2))
+  ([^Transaction tr ^KeySelector begin ^KeySelector end limit]
+   (.getRange tr begin end limit)))
 
 
 (defn clear-key

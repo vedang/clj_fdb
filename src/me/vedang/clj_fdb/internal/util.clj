@@ -1,7 +1,8 @@
 (ns me.vedang.clj-fdb.internal.util
-  (:require [me.vedang.clj-fdb.core :as fc]
+  (:require [me.vedang.clj-fdb.FDB :as cfdb]
+            [me.vedang.clj-fdb.core :as fc]
             [me.vedang.clj-fdb.directory.directory :as fdir]
-            [me.vedang.clj-fdb.FDB :as cfdb]
+            [me.vedang.clj-fdb.range :as frange]
             [me.vedang.clj-fdb.tuple.tuple :as ftup])
   (:import com.apple.foundationdb.Database))
 
@@ -34,3 +35,11 @@
     (binding [*test-prefix* random-prefix]
       (test))
     (clear-all-with-prefix random-prefix)))
+
+(def ^:private smallest-ba (byte-array [(unchecked-byte 0x01)]))
+(def ^:private largest-ba (byte-array [(unchecked-byte 0xff)]))
+
+(defn clear-db
+  "WARNING! This clears the entire db."
+  [db]
+  (fc/clear-range db (frange/range smallest-ba largest-ba)))
