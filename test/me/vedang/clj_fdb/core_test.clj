@@ -5,7 +5,7 @@
             [me.vedang.clj-fdb.core :as fc]
             [me.vedang.clj-fdb.directory.directory :as fdir]
             [me.vedang.clj-fdb.internal.util :as u]
-            [me.vedang.clj-fdb.key-selector :as sut]
+            [me.vedang.clj-fdb.key-selector :as fks]
             [me.vedang.clj-fdb.range :as frange]
             [me.vedang.clj-fdb.subspace.subspace :as fsub]
             [me.vedang.clj-fdb.transaction :as ftr]
@@ -138,28 +138,28 @@
       (testing "get-range with keyselectors"
         (is (=  (zipmap (take 6 input-keys) (repeat v))
                 (fc/get-range db
-                              (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo")))
-                              (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo5")))
+                              (fks/first-greater-or-equal (fsub/pack subspace (ftup/from "foo")))
+                              (fks/first-greater-or-equal (fsub/pack subspace (ftup/from "foo5")))
                               {:keyfn third :valfn bs/to-string}))))
 
       (testing "get-range with keyselectors and limit"
         (is (= {"foo" v "foo0" v}
                (fc/get-range db
-                             (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo")))
-                             (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo5")))
+                             (fks/first-greater-or-equal (fsub/pack subspace (ftup/from "foo")))
+                             (fks/first-greater-or-equal (fsub/pack subspace (ftup/from "foo5")))
                              {:keyfn third :valfn bs/to-string :limit 2}))))
 
       (testing "get-range with keyselectors and limit and skip"
         (is (= {"foo1" v "foo2" v}
                (fc/get-range db
-                             (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo")))
-                             (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo5")))
+                             (fks/first-greater-or-equal (fsub/pack subspace (ftup/from "foo")))
+                             (fks/first-greater-or-equal (fsub/pack subspace (ftup/from "foo5")))
                              {:keyfn third :valfn bs/to-string :limit 2 :skip 2})))
         ;; case where skip goes beyond end keyselector
         (is (= {"foo4" v }
                (fc/get-range db
-                             (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo")))
-                             (sut/first-greater-or-equal (fsub/pack subspace (ftup/from "foo5")))
+                             (fks/first-greater-or-equal (fsub/pack subspace (ftup/from "foo")))
+                             (fks/first-greater-or-equal (fsub/pack subspace (ftup/from "foo5")))
                              {:keyfn third :valfn bs/to-string :limit 2 :skip 5})))))))
 
 (deftest clear-range-tests

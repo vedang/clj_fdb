@@ -1,7 +1,7 @@
 (ns me.vedang.clj-fdb.core
   (:refer-clojure :exclude [get set range])
   (:require [me.vedang.clj-fdb.impl :as fimpl]
-            [me.vedang.clj-fdb.key-selector :as sut]
+            [me.vedang.clj-fdb.key-selector :as fks]
             [me.vedang.clj-fdb.mutation-type :as fmut]
             [me.vedang.clj-fdb.subspace.subspace :as fsub]
             [me.vedang.clj-fdb.transaction :as ftr]
@@ -115,7 +115,7 @@
 
 (defn- create-range-args [arg1 arg2 {:keys [skip]}]
   (if (instance? KeySelector arg1)
-    [(cond-> arg1 skip (sut/add skip)) arg2]
+    [(cond-> arg1 skip (fks/add skip)) arg2]
     [(range arg1 arg2)]))
 
 (defn- get-key-decoder [arg1 arg2]
