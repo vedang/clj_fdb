@@ -5,10 +5,13 @@
            com.apple.foundationdb.subspace.Subspace
            com.apple.foundationdb.tuple.Tuple))
 
+(def ^:private byte-array-class (class (byte-array 0)))
+
 (defn ^Subspace create
   "Constructor for a subspace formed with the specified prefix Tuple."
   ([prefix]
    (cond
+     (instance? byte-array-class prefix) (Subspace. prefix)
      (vector? prefix) (Subspace. (ftup/create prefix))
      (instance? Tuple prefix) (Subspace. ^Tuple prefix)
      :else (throw (IllegalArgumentException.
@@ -41,11 +44,12 @@
   suffix."
   ([^Subspace s]
    (.pack s))
-  ([^Subspace s t]
+  ([^Subspace s k]
    (cond
-     (instance? Tuple t) (.pack s ^Tuple t)
-     (vector? t) (.pack s ^Tuple (ftup/create t))
-     :else (.pack s ^Tuple (ftup/from t)))))
+     (instance? byte-array-class k) (.pack s k)
+     (instance? Tuple k) (.pack s ^Tuple k)
+     (vector? k) (.pack s ^Tuple (ftup/create k))
+     :else (.pack s ^Tuple (ftup/from k)))))
 
 
 (defn ^Tuple unpack
