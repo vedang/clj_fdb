@@ -151,12 +151,12 @@
          empty-coll (or (empty (:coll opts)) {})]
      (ftr/read tc
                (fn [^Transaction tr]
-                 (-> (reduce (fn [acc ^KeyValue kv]
-                               (conj! acc [(keyfn (.getKey kv))
-                                           (valfn (.getValue kv))]))
-                             (transient empty-coll)
-                             (ftr/get-range tr rg))
-                     persistent!))))))
+                 (persistent!
+                  (reduce (fn [acc ^KeyValue kv]
+                            (conj! acc [(keyfn (.getKey kv))
+                                        (valfn (.getValue kv))]))
+                          (transient empty-coll)
+                          (ftr/get-range tr rg))))))))
 
 (defn clear-range
   "Takes the following:
