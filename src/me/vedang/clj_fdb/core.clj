@@ -112,7 +112,6 @@
        (fsub/range s t))
      (range arg2))))
 
-
 (defn get-range
   "Takes the following:
   - TransactionContext `tc`
@@ -123,6 +122,8 @@
   The `opts` map takes the following option at the moment:
   - `keyfn` :
   - `valfn` : Functions to transform the key/value to the correct format.
+  - `coll` : A collection of the type into which the result should be
+  accumulated.
 
   Note that the byte-arrays are always sent through the `fimpl/decode`
   function first. (So if you have stored a Tuple in FDB, the `valfn`
@@ -146,16 +147,16 @@
                        (partial fimpl/decode (or s k))
                        fimpl/decode)
          keyfn (comp (:keyfn opts identity) key-decoder)
-         valfn (comp (:valfn opts identity) fimpl/decode)]
+         valfn (comp (:valfn opts identity) fimpl/decode)
+         empty-coll (or (empty (:coll opts)) {})]
      (ftr/read tc
                (fn [^Transaction tr]
-                 (reduce (fn [acc ^KeyValue kv]
-                           (assoc acc
-                                  (keyfn (.getKey kv))
-                                  (valfn (.getValue kv))))
-                         {}
-                         (ftr/get-range tr rg)))))))
-
+                 (persistent!
+                  (reduce (fn [acc ^KeyValue kv]
+                            (conj! acc [(keyfn (.getKey kv))
+                                        (valfn (.getValue kv))]))
+                          (transient empty-coll)
+                          (ftr/get-range tr rg))))))))
 
 (defn clear-range
   "Takes the following:

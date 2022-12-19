@@ -61,6 +61,24 @@
         (is (= expected-map
                (fc/get-range db rg {:keyfn second :valfn bs/to-string})))))))
 
+(deftest get-range-accumulator-test
+  (testing "Test the best-case path for `fc/get-range`. End is exclusive."
+    (let [input-keys ["bar" "car" "foo" "gum"]
+          begin      (ftup/pack (ftup/from u/*test-prefix* "b"))
+          end        (ftup/pack (ftup/from u/*test-prefix* "g"))
+          rg         (frange/range begin end)
+          v          "1"
+          expected-vec [["bar" v] ["car" v] ["foo" v]]]
+      (with-open [^Database db (cfdb/open fdb)]
+        (ftr/run db
+          (fn [^Transaction tr]
+            (doseq [k input-keys]
+              (let [k (ftup/from u/*test-prefix* k)]
+                (fc/set tr k (bs/to-byte-array v))))))
+
+        (is (= expected-vec
+               (fc/get-range db rg {:keyfn second :valfn bs/to-string :coll []})))))))
+
 
 (deftest clear-range-tests
   (testing "Test the best-case path for `fc/clear-range`. End is exclusive."
